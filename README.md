@@ -1,15 +1,4 @@
-# Application d'import CSV avec Symfony 7.2
 
-Cette application permet d'importer des fichiers CSV volumineux (>100 000 lignes) en utilisant les bonnes pratiques de performance et de mémoire avec Symfony 7.2.
-
-## Fonctionnalités
-
-- Import de fichiers CSV volumineux avec gestion de la mémoire
-- Validation des données avec le composant Validator de Symfony
-- Utilisation de DTO pour représenter chaque ligne du fichier
-- Gestion des erreurs avec une exception personnalisée
-- Traitement par lots (batch) pour optimiser les performances
-- Commande console pour exécuter l'import
 
 ## Prérequis
 
@@ -17,6 +6,7 @@ Cette application permet d'importer des fichiers CSV volumineux (>100 000 lignes
 - Composer
 - Docker et Docker Compose
 - Symfony CLI (recommandé)
+- OpenSSL (pour la génération des clés JWT)
 
 ## Installation
 
@@ -42,67 +32,68 @@ Cette application permet d'importer des fichiers CSV volumineux (>100 000 lignes
    php bin/console doctrine:migrations:migrate -n
    ```
 
-## Utilisation
 
-### Préparation du fichier CSV
+## Configuration JWT et Authentification
 
-Le fichier CSV doit avoir les colonnes suivantes (séparées par des points-virgules) :
-- name : Nom de l'utilisateur (obligatoire)
-- email : Adresse email (obligatoire, doit être valide)
-- amount : Montant (optionnel, doit être numérique)
+### Configuration initiale
 
-Exemple de contenu :
-```
-name;email;amount
-John Doe;john@example.com;100.50
-Jane Smith;jane@example.com;200.75
-```
+1. **Générer les clés JWT** :
+   ```bash
+   # Exporter la phrase secrète (à stocker en sécurité dans .env.local)
+   export JWT_PASSPHRASE='votre_phrase_secrete'
+   
+   # Générer la clé privée
+   openssl genrsa -out config/jwt/private.pem -aes256 -passout env:JWT_PASSPHRASE 4096
+   
+   # Générer la clé publique
+   openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem -passin env:JWT_PASSPHRASE
+   
+   # Définir les bonnes permissions
+   chmod 600 config/jwt/private.pem
+   chmod 644 config/jwt/public.pem
+   ```
 
-### Commande d'import
+2. **Configuration des variables d'environnement** :
+   - Créez un fichier `.env.local` à partir de `.env`
+   - Définissez les variables JWT suivantes :
+     ```
+     JWT_SECRET_KEY='%kernel.project_dir%/config/jwt/private.pem'
+     JWT_PUBLIC_KEY='%kernel.project_dir%/config/jwt/public.pem'
+     JWT_PASSPHRASE='votre_phrase_secrete'
+     JWT_TOKEN_TTL=3600  # Durée de validité du token en secondes (1h)
+     JWT_REFRESH_TOKEN_TTL=2592000  # Durée de validité du refresh token (30j)
+     ```
 
-Pour importer un fichier CSV, utilisez la commande suivante :
+### Utilisation de l'API d'authentification
 
-```bash
-php bin/console app:import:csv /chemin/vers/votre/fichier.csv
-```
+1. **Authentification** :
+   ```bash
+   curl -X POST http://localhost:8000/api/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"email": "votre@email.com", "password": "votre_mot_de_passe"}'
+   ```
 
-Options disponibles :
-- `-d, --delimiter` : Délimiteur du fichier CSV (par défaut: `;`)
-- `-b, --batch-size` : Taille des lots pour la sauvegarde en base (par défaut: 100)
+   Réponse en cas de succès :
+   ```json
+   {
+     "token": "votre_jwt_token"
+   }
+   ```
 
-Exemple avec options :
-```bash
-php bin/console app:import:csv /chemin/vers/votre/fichier.csv -d , -b 200
-```
+2. **Utilisation du token** :
+   Inclure le token dans l'en-tête `Authorization` :
+   ```
+   Authorization: Bearer votre_jwt_token
+   ```
 
-### Exemple avec le fichier de test
+### Bonnes pratiques de sécurité
 
-Un fichier d'exemple est fourni dans le répertoire `import/` :
+- Ne jamais commiter le fichier `.env.local` ou les clés JWT
+- Utiliser des phrases secrètes fortes (au moins 64 caractères aléatoires)
+- Régénérer périodiquement les clés JWT en production
+- Utiliser HTTPS en production
+- Limiter la durée de validité des tokens
 
-```bash
-php bin/console app:import:csv import/example.csv
-```
-
-## Structure du projet
-
-```
-src/
-├── Command/ImportCsvCommand.php     # Commande console pour l'import
-├── Service/
-│   ├── CsvImporter.php            # Service principal d'import
-│   └── Dto/
-│       └── ImportRowDto.php       # DTO pour représenter une ligne du CSV
-├── Entity/ImportRecord.php          # Entité de stockage
-└── Exception/InvalidCsvRowException.php # Exception personnalisée
-```
-
-## Bonnes pratiques implémentées
-
-- Utilisation de DTO pour la validation des données
-- Traitement par lots pour éviter les fuites de mémoire
-- Gestion propre des erreurs avec rapport détaillé
-- Configuration via des paramètres (taille des lots, etc.)
-- Documentation complète
 
 ## Tests
 
