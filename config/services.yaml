@@ -2,19 +2,111 @@
 # Files in the packages/ subdirectory configure your dependencies.
 
 # Put parameters here that don't need to change on each machine where the app is deployed
-# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    # Taille des lots pour l'import CSV
+    app.import.batch_size: 100
+    
+    # Configuration Payload CMS
+    payload_api_url: '%env(PAYLOAD_API_URL)%'
+    payload_api_key: '%env(PAYLOAD_API_KEY)%'
+    
+    # Configuration de l'application
+    app_name: '%env(APP_NAME)%'
+    app_env: '%kernel.environment%'
+    app_secret: '%kernel.secret%'
+    app_default_from_email: '%env(MAILER_FROM)%'
+    
+    # Configuration JWT
+    jwt_secret_key: '%env(JWT_SECRET_KEY)%'
+    jwt_public_key: '%env(JWT_PUBLIC_KEY)%'
+    jwt_pass_phrase: '%env(JWT_PASSPHRASE)%'
+    jwt_token_ttl: '%env(int:JWT_TOKEN_TTL)%' # 1 hour
+    jwt_refresh_token_ttl: '%env(int:JWT_REFRESH_TOKEN_TTL)%' # 30 days
 
+# Configuration par défaut pour tous les services
 services:
-    # default configuration for services in *this* file
     _defaults:
-        autowire: true      # Automatically injects dependencies in your services.
-        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        autowire: true      # Injection automatique des dépendances
+        autoconfigure: true # Configuration automatique des tags
+        public: false
 
-    # makes classes in src/ available to be used as services
-    # this creates a service per class whose id is the fully-qualified class name
+    # Active l'autoconfiguration pour tous les fichiers dans src/
     App\:
         resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+            - '../src/Tests/'
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+    # Configuration des services personnalisés
+    App\Core\Service\PayloadClient:
+        arguments:
+            $payloadApiUrl: '%payload_api_url%'
+            $payloadApiKey: '%payload_api_key%'
+
+    # Configuration des services d'authentification
+    App\Core\Service\EmailVerificationService:
+        arguments:
+            $defaultFromEmail: '%app_default_from_email%'
+            $appEnv: '%app_env%'
+    
+    App\Core\Service\PasswordResetService:
+        arguments:
+            $defaultFromEmail: '%app_default_from_email%'
+    
+    # Configuration pour JWT
+    Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface:
+        class: Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManager
+    
+    # Paramètres JWT (déplacés dans la section parameters)
+    
+    # Configuration des contrôleurs (doivent être publics)
+    App\BFF\Controller\:
+        resource: '../src/BFF/Controller/'
+        tags: ['controller.service_arguments']
+        public: true
+        bind:
+            $appEnv: '%app_env%'
+            $defaultFromEmail: '%app_default_from_email%'
+            $jwtTokenTtl: '%jwt_token_ttl%'
+            $jwtRefreshTokenTtl: '%jwt_refresh_token_ttl%'
+
+    App\PortailClient\Controller\:
+        resource: '../src/PortailClient/Controller/'
+        tags: ['controller.service_arguments']
+        public: true
+
+    App\SuperAdmin\Controller\:
+        resource: '../src/SuperAdmin/Controller/'
+        tags: ['controller.service_arguments']
+        public: true
+
+    App\Vitrine\Controller\:
+        resource: '../src/Vitrine/Controller/'
+        tags: ['controller.service_arguments']
+        public: true
+
+    App\Onboarding\Controller\:
+        resource: '../src/Onboarding/Controller/'
+        tags: ['controller.service_arguments']
+        public: true
+
+    # Configuration du workflow d'onboarding
+    workflow.onboarding:
+        class: Symfony\Component\Workflow\Workflow
+        arguments:
+            - '@=service("App\\Onboarding\\Workflow\\OnboardingWorkflow").createDefinition()'
+            - '@=service("App\\Onboarding\\Workflow\\OnboardingWorkflow").createMarkingStore()'
+            - '@event_dispatcher'
+            - 'onboarding'
+        tags:
+            - { name: 'workflow.workflows', type: 'state_machine' }
+    
+    # Alias pour l'injection du workflow d'onboarding
+    Symfony\Component\Workflow\WorkflowInterface $onboardingWorkflow: '@workflow.onboarding'
+
+    # Configuration du gestionnaire d'événements pour le workflow
+    App\Onboarding\EventSubscriber\WorkflowSubscriber:
+        tags:
+            - { name: 'kernel.event_subscriber' }

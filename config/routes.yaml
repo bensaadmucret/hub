@@ -1,5 +1,15 @@
+# Contrôleurs principaux
 controllers:
     resource:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+
+# Contrôleurs BFF (Backend For Frontend)
+bff_controllers:
+    resource:
+        path: ../src/BFF/Controller/
+        namespace: App\BFF\Controller
+    type: attribute
+    # Le préfixe est déjà défini dans l'attribut de route du contrôleur
+    name_prefix: app_bff_

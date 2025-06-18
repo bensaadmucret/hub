@@ -1,0 +1,31 @@
+lexik_jwt_authentication:
+    secret_key: '%env(resolve:JWT_SECRET_KEY)%'
+    public_key: '%env(resolve:JWT_PUBLIC_KEY)%'
+    pass_phrase: '%env(JWT_PASSPHRASE)%'
+    
+    # Configuration du token JWT
+    token_ttl: '%env(int:JWT_TOKEN_TTL)%'  # Durée de vie du token (1 heure par défaut)
+    
+    # Configuration des extracteurs de token
+    token_extractors:
+        # Permet d'extraire le token depuis l'en-tête Authorization
+        authorization_header:
+            enabled: true
+            prefix: Bearer
+            name: Authorization
+        
+        # Permet d'extraire le token depuis un cookie
+        cookie:
+            enabled: true
+            name: BEARER
+        
+        # Permet d'extraire le token depuis un paramètre de requête
+        query_parameter:
+            enabled: true
+            name: bearer
+    
+    # Configuration pour la suppression du token du corps quand des cookies sont utilisés
+    remove_token_from_body_when_cookies_used: true
+    
+    # Configuration des cookies (désactivé par défaut)
+    set_cookies: []

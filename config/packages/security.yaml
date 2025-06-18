@@ -2,28 +2,77 @@ security:
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+        App\Core\Entity\User:
+            algorithm: auto
+
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
-        users_in_memory: { memory: null }
+        app_user_provider:
+            entity:
+                class: App\Core\Entity\User
+                property: email
+
+    role_hierarchy:
+        ROLE_SUPER_ADMIN: [ROLE_ADMIN, ROLE_ALLOWED_TO_SWITCH]
+        ROLE_ADMIN: [ROLE_USER]
+        ROLE_CLIENT_ADMIN: [ROLE_USER]
+        ROLE_USER: []
+
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+
+        # API firewall
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: app_user_provider
+            json_login:
+                check_path: app_bff_api_auth_login
+                username_path: email
+                password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+            jwt: ~  # Active l'authentification JWT
+            entry_point: jwt
+            user_checker: security.user_checker
+            # Désactive la vérification CSRF pour l'API
+            security: true
+            # Configuration de la déconnexion
+            logout:
+                path: api_auth_logout
+                invalidate_session: false
+
+        # Main firewall for all other routes (pour les routes web)
         main:
             lazy: true
-            provider: users_in_memory
-
-            # activate different ways to authenticate
-            # https://symfony.com/doc/current/security.html#the-firewall
-
-            # https://symfony.com/doc/current/security/impersonating_user.html
-            # switch_user: true
+            provider: app_user_provider
+            json_login:
+                check_path: app_login
+                username_path: email
+                password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+            form_login:
+                login_path: app_login
+                check_path: app_login
+            logout:
+                path: app_logout
+                target: app_home
 
     # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        # API - Accès public aux endpoints d'authentification
+        - { path: ^/api/auth/(login|register|refresh-token|verify-email|resend-verification|request-reset|reset-password|validate-reset-token), roles: PUBLIC_ACCESS }
+        # API - Accès authentifié pour les autres endpoints
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+        # Admin - Accès restreint
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        # Super Admin - Accès restreint
+        - { path: ^/super-admin, roles: ROLE_SUPER_ADMIN }
+        # Portail client - Accès utilisateur standard
+        - { path: ^/portail, roles: ROLE_USER }
 
 when@test:
     security:

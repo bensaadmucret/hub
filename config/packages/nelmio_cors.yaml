@@ -1,0 +1,26 @@
+nelmio_cors:
+    defaults:
+        origin_regex: true
+        allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
+        allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
+        allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-Auth-Token', 'X-CSRF-Token']
+        expose_headers: ['Link', 'X-Pagination-Current-Page', 'X-Pagination-Page-Count', 'X-Pagination-Per-Page', 'X-Pagination-Total-Count']
+        max_age: 3600
+        # Autorise les cookies et les en-têtes d'autorisation
+        allow_credentials: true
+    paths:
+        '^/api':
+            # En développement, autorise toutes les origines
+            # En production, remplacez par vos domaines autorisés
+            allow_origin: ['*']
+            allow_headers: ['*']
+            allow_methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+            max_age: 3600
+            expose_headers: ['Link', 'X-Pagination-Current-Page', 'X-Pagination-Page-Count', 'X-Pagination-Per-Page', 'X-Pagination-Total-Count']
+            allow_credentials: true
+        '^/':
+            allow_origin: ['*']
+            allow_headers: ['*']
+            allow_methods: ['GET', 'POST', 'OPTIONS']
+            max_age: 3600
+            allow_credentials: true

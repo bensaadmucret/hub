@@ -1,0 +1,32 @@
+framework:
+    workflows:
+        onboarding:
+            type: 'state_machine'
+            audit_trail:
+                enabled: true
+            supports:
+                - App\Core\Entity\User
+            initial_marking: start
+            places:
+                - start
+                - email_verified
+                - profile_completed
+                - subscription_selected
+                - payment_processed
+                - onboarding_complete
+            transitions:
+                verify_email:
+                    from: start
+                    to: email_verified
+                complete_profile:
+                    from: email_verified
+                    to: profile_completed
+                select_subscription:
+                    from: profile_completed
+                    to: subscription_selected
+                process_payment:
+                    from: subscription_selected
+                    to: payment_processed
+                complete_onboarding:
+                    from: payment_processed
+                    to: onboarding_complete

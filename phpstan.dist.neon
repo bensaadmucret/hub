@@ -1,0 +1,12 @@
+parameters:
+    level: 9
+    paths:
+        - src/
+    
+    excludePaths:
+        - var/*
+        - vendor/*
+        - tests/bootstrap.php
+    
+    ignoreErrors:
+        - '#Property App\\Entity\\ImportRecord::\$id \(int<1, max>\|null\) is never assigned int<1, max> so it can be removed from the property type\.#'

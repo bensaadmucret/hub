@@ -1,0 +1,5 @@
+name;email;amount;created_at;updated_at
+John Doe;john@example.com;100.50;2025-06-01
+Jane Smith;jane@example.com;200.75;2025-06-02
+Invalid User;invalid-email;abc;2025-06-03
+

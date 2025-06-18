@@ -1,0 +1,25 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: 'API Documentation'
+            description: |
+                Documentation de l'API de l'application.
+                
+                ## Authentification
+                
+                Pour vous authentifier, utilisez le endpoint `/api/auth/login` avec vos identifiants.
+                
+                Incluez le token JWT reçu dans l'en-tête `Authorization: Bearer VOTRE_TOKEN` pour les requêtes authentifiées.
+            version: 1.0.0
+        components:
+            securitySchemes:
+                JWT:
+                    type: http
+                    scheme: bearer
+                    bearerFormat: JWT
+    areas:
+        path_patterns:
+            - ^/api(?!/doc$)  # Toutes les routes sous /api sauf /api/doc
+            - ^/api/auth      # Inclure explicitement les routes d'authentification
+    models:
+        use_jms: false
