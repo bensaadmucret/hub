@@ -10,13 +10,16 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Workflow\WorkflowInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[Route('/onboarding')]
 class OnboardingController extends AbstractController
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private WorkflowInterface $onboardingWorkflow
+        private WorkflowInterface $onboardingWorkflow,
+        private ValidatorInterface $validator
     ) {
     }
 
@@ -98,12 +101,31 @@ class OnboardingController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
 
+        if (!is_array($data)) {
+            return $this->json(['status' => 'error', 'message' => 'Invalid JSON payload.'], 400);
+        }
+
+        $constraints = new Assert\Collection([
+            'firstName' => new Assert\Optional([new Assert\NotBlank(), new Assert\Type('string')]),
+            'lastName' => new Assert\Optional([new Assert\NotBlank(), new Assert\Type('string')]),
+        ]);
+
+        $violations = $this->validator->validate($data, $constraints);
+
+        if (count($violations) > 0) {
+            $errors = [];
+            foreach ($violations as $violation) {
+                $errors[trim($violation->getPropertyPath(), '[]')] = $violation->getMessage();
+            }
+            return $this->json(['status' => 'error', 'message' => 'Validation failed', 'errors' => $errors], 400);
+        }
+
         // Mettre à jour le profil utilisateur
-        if (isset($data['firstName'])) {
+        if (array_key_exists('firstName', $data)) {
             $user->setFirstName($data['firstName']);
         }
 
-        if (isset($data['lastName'])) {
+        if (array_key_exists('lastName', $data)) {
             $user->setLastName($data['lastName']);
         }
 
@@ -140,11 +162,22 @@ class OnboardingController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
 
-        if (!isset($data['planId'])) {
-            return $this->json([
-                'status' => 'error',
-                'message' => 'Missing planId',
-            ], 400);
+        if (!is_array($data)) {
+            return $this->json(['status' => 'error', 'message' => 'Invalid JSON payload.'], 400);
+        }
+
+        $constraints = new Assert\Collection([
+            'planId' => [new Assert\NotBlank(), new Assert\Type('string')],
+        ]);
+
+        $violations = $this->validator->validate($data, $constraints);
+
+        if (count($violations) > 0) {
+            $errors = [];
+            foreach ($violations as $violation) {
+                $errors[trim($violation->getPropertyPath(), '[]')] = $violation->getMessage();
+            }
+            return $this->json(['status' => 'error', 'message' => 'Validation failed', 'errors' => $errors], 400);
         }
 
         if ($this->onboardingWorkflow->can($user, 'select_subscription')) {
@@ -180,11 +213,22 @@ class OnboardingController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
 
-        if (!isset($data['paymentMethodId'])) {
-            return $this->json([
-                'status' => 'error',
-                'message' => 'Missing payment method',
-            ], 400);
+        if (!is_array($data)) {
+            return $this->json(['status' => 'error', 'message' => 'Invalid JSON payload.'], 400);
+        }
+
+        $constraints = new Assert\Collection([
+            'paymentMethodId' => [new Assert\NotBlank(), new Assert\Type('string')],
+        ]);
+
+        $violations = $this->validator->validate($data, $constraints);
+
+        if (count($violations) > 0) {
+            $errors = [];
+            foreach ($violations as $violation) {
+                $errors[trim($violation->getPropertyPath(), '[]')] = $violation->getMessage();
+            }
+            return $this->json(['status' => 'error', 'message' => 'Validation failed', 'errors' => $errors], 400);
         }
 
         if ($this->onboardingWorkflow->can($user, 'process_payment')) {

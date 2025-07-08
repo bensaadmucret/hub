@@ -8,6 +8,7 @@ use Symfony\Component\Workflow\MarkingStore\MethodMarkingStore;
 use Symfony\Component\Workflow\MarkingStore\MarkingStoreInterface;
 use Symfony\Component\Workflow\Transition;
 use Symfony\Component\Workflow\Workflow;
+use Symfony\Component\Workflow\Definition;
 
 class OnboardingWorkflow
 {
@@ -31,7 +32,7 @@ class OnboardingWorkflow
     /**
      * Crée la définition du workflow
      */
-    public function createDefinition()
+    public function createDefinition(): Definition
     {
         $builder = new DefinitionBuilder();
 
@@ -80,11 +81,7 @@ class OnboardingWorkflow
      */
     public function createMarkingStore(): MarkingStoreInterface
     {
-        return new MethodMarkingStore(
-            true, // utilise les propriétés multiples
-            'currentPlace', // nom de la propriété pour stocker l'état actuel
-            'currentPlace' // nom de la méthode pour obtenir/modifier l'état
-        );
+        return new MethodMarkingStore(true, 'currentPlace');
     }
 
     /**
@@ -103,6 +100,9 @@ class OnboardingWorkflow
     /**
      * Liste des états du workflow
      */
+    /**
+     * @return array<string, string>
+     */
     public static function getStates(): array
     {
         return [
@@ -117,6 +117,9 @@ class OnboardingWorkflow
 
     /**
      * Liste des transitions disponibles
+     */
+    /**
+     * @return array<string, string>
      */
     public static function getTransitions(): array
     {

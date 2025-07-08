@@ -71,7 +71,14 @@ class PasswordResetService
 
         // Mettre à jour le mot de passe
         $user->setPlainPassword($newPassword);
-        $hashedPassword = $this->passwordHasher->hashPassword($user, $user->getPlainPassword());
+        $plainPassword = $user->getPlainPassword();
+
+        if (null === $plainPassword) {
+            // Ne devrait jamais arriver si $newPassword est une chaîne
+            return false;
+        }
+
+        $hashedPassword = $this->passwordHasher->hashPassword($user, $plainPassword);
         $user->setPassword($hashedPassword);
         $user->eraseCredentials();
 
@@ -87,9 +94,15 @@ class PasswordResetService
 
     private function sendPasswordResetEmail(User $user, string $resetUrl): void
     {
+        $recipientEmail = $user->getEmail();
+        if (empty($recipientEmail)) {
+            // Log an error, can't send without an email
+            return;
+        }
+
         $email = (new Email())
             ->from($this->defaultFromEmail)
-            ->to($user->getEmail())
+            ->to($recipientEmail)
             ->subject('Réinitialisation de votre mot de passe')
             ->html($this->getEmailContent($user, $resetUrl));
 

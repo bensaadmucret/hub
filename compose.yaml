@@ -1,11 +1,8 @@
-
 services:
-###> doctrine/doctrine-bundle ###
   database:
     image: postgres:${POSTGRES_VERSION:-16}-alpine
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-app}
-      # You should definitely change the password in production
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
       POSTGRES_USER: ${POSTGRES_USER:-app}
     healthcheck:
@@ -15,12 +12,9 @@ services:
       start_period: 60s
     volumes:
       - database_data:/var/lib/postgresql/data:rw
-      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
-      # - ./docker/db/data:/var/lib/postgresql/data:rw
     networks:
       - symfony
 
-  # Adminer - Interface légère de gestion de base de données
   adminer:
     image: adminer:latest
     depends_on:
@@ -30,11 +24,99 @@ services:
     networks:
       - symfony
 
+  supabase-db:
+    image: supabase/postgres:15.1.0.124
+    container_name: supabase-db
+    restart: unless-stopped
+    ports:
+      - "54322:5432"
+    environment:
+      POSTGRES_PASSWORD: supabase
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+    volumes:
+      - supabase_db_data:/var/lib/postgresql/data
+    networks:
+      - symfony
+
+  supabase-rest:
+    image: postgrest/postgrest:v12.2.12
+    container_name: supabase-rest
+    restart: unless-stopped
+    depends_on:
+      - supabase-db
+    ports:
+      - "54324:3000"
+    environment:
+      PGRST_DB_URI: postgres://postgres:supabase@supabase-db:5432/postgres
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: super-secret-jwt
+    networks:
+      - symfony
+
+  supabase-auth:
+    image: supabase/gotrue:v2.174.0
+    container_name: supabase-auth
+    restart: unless-stopped
+    depends_on:
+      - supabase-db
+    ports:
+      - "54325:9999"
+    environment:
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:supabase@supabase-db:5432/postgres?sslmode=disable
+      GOTRUE_JWT_SECRET: super-secret-jwt
+      GOTRUE_SITE_URL: http://localhost:3000
+      GOTRUE_API_EXTERNAL_URL: http://localhost:54325
+    networks:
+      - symfony
+
+  supabase-storage:
+    image: supabase/storage-api:v1.23.0
+    container_name: supabase-storage
+    restart: unless-stopped
+    depends_on:
+      - supabase-db
+    ports:
+      - "54326:5000"
+    environment:
+      ANON_KEY: anon-key
+      SERVICE_KEY: service-role-key
+      POSTGREST_URL: http://supabase-rest:3000
+      PGRST_JWT_SECRET: super-secret-jwt
+      DATABASE_URL: postgres://postgres:supabase@supabase-db:5432/postgres
+    networks:
+      - symfony
+
+  supabase-imgproxy:
+    image: darthsim/imgproxy:v3.14.0
+    container_name: supabase-imgproxy
+    restart: unless-stopped
+    ports:
+      - "54327:8080"
+    environment:
+      IMGPROXY_USE_ETAG: "true"
+      IMGPROXY_ENFORCE_AVIF: "true"
+    networks:
+      - symfony
+
+  supabase-studio:
+    image: supabase/studio:latest
+    container_name: supabase-studio
+    restart: unless-stopped
+    depends_on:
+      - supabase-db
+    ports:
+      - "54323:3000"
+    environment:
+      STUDIO_PG_META_URL: postgres://postgres:supabase@supabase-db:5432/postgres
+    networks:
+      - symfony
+
 networks:
   symfony:
     driver: bridge
 
 volumes:
-###> doctrine/doctrine-bundle ###
   database_data:
-###< doctrine/doctrine-bundle ###
+  supabase_db_data:

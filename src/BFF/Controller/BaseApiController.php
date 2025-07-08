@@ -8,13 +8,19 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
+/**
+ * @method \App\Core\Entity\User|null getUser()
+ */
 class BaseApiController extends AbstractController
 {
     /**
      * Crée une réponse JSON standardisée pour une requête réussie
+     *
+     * @param mixed $data
+     * @param array<string, string> $headers
      */
     protected function createSuccessResponse(
-        $data = null,
+        mixed $data = null,
         ?string $message = null,
         int $statusCode = Response::HTTP_OK,
         array $headers = []
@@ -34,6 +40,9 @@ class BaseApiController extends AbstractController
 
     /**
      * Crée une réponse d'erreur standardisée
+     *
+     * @param array<mixed> $errors
+     * @param array<string, string> $headers
      */
     protected function createErrorResponse(
         string $message,
@@ -55,6 +64,8 @@ class BaseApiController extends AbstractController
 
     /**
      * Formate les erreurs de validation
+     *
+     * @return array<string, string>
      */
     protected function formatValidationErrors(ConstraintViolationListInterface $errors): array
     {
@@ -70,24 +81,17 @@ class BaseApiController extends AbstractController
     /**
      * Formate les erreurs de formulaire
      */
+    /**
+     * Formate les erreurs de formulaire en une simple liste de messages.
+     * @return string[]
+     */
     protected function getFormErrors(FormInterface $form): array
     {
         $errors = [];
-
-        // Récupère les erreurs globales du formulaire
-        foreach ($form->getErrors() as $error) {
-            $errors['_form'][] = $error->getMessage();
+        foreach ($form->getErrors(true, true) as $error) {
+            /** @var \Symfony\Component\Form\FormError $error */
+            $errors[] = $error->getMessage();
         }
-
-        // Récupère les erreurs pour chaque champ
-        foreach ($form as $child) {
-            if (!$child->isValid()) {
-                foreach ($child->getErrors() as $error) {
-                    $errors[$child->getName()][] = $error->getMessage();
-                }
-            }
-        }
-
         return $errors;
     }
 
@@ -102,7 +106,7 @@ class BaseApiController extends AbstractController
     /**
      * Vérifie si l'utilisateur est propriétaire de la ressource
      */
-    protected function isOwner($entity, string $ownerProperty = 'user'): bool
+    protected function isOwner(object $entity, string $ownerProperty = 'user'): bool
     {
         $user = $this->getUser();
 
@@ -117,9 +121,12 @@ class BaseApiController extends AbstractController
 
     /**
      * Vérifie les permissions et renvoie une réponse d'erreur si nécessaire
+     *
+     * @param object $entity
+     * @param string[] $allowedRoles
      */
     protected function checkPermission(
-        $entity,
+        object $entity,
         string $ownerProperty = 'user',
         array $allowedRoles = ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN']
     ): ?JsonResponse {

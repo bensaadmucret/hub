@@ -23,6 +23,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, \String
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     #[Groups(['user:read'])]
+    /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
     #[ORM\Column(type: 'string', length: 180, unique: true)]
@@ -32,6 +33,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, \String
     private string $email;
 
     #[ORM\Column(type: 'json')]
+
+    /** @phpstan-ignore-next-line */
     private array $roles = [self::ROLE_USER];
 
     #[ORM\Column(type: 'string')]
@@ -60,6 +63,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, \String
 
     #[ORM\Column(type: 'string', length: 100, unique: true, nullable: true)]
     private ?string $emailVerificationToken = null;
+
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $emailVerificationTokenRequestedAt = null;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?\DateTimeImmutable $emailVerifiedAt = null;
@@ -104,14 +110,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, \String
      * A visual identifier that represents this user.
      *
      * @see UserInterface
+     * @return non-empty-string
      */
     public function getUserIdentifier(): string
     {
-        return (string) $this->email;
+        if (empty($this->email)) {
+            throw new \LogicException('User email cannot be empty.');
+        }
+        return $this->email;
     }
 
     /**
      * @see UserInterface
+     * @return string[]
      */
     public function getRoles(): array
     {
@@ -122,9 +133,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, \String
         return array_unique($roles);
     }
 
+    /**
+     * @param string[] $roles
+     */
     public function setRoles(array $roles): self
     {
         $this->roles = $roles;
+
         return $this;
     }
 
@@ -251,6 +266,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, \String
     public function setEmailVerificationToken(?string $token): self
     {
         $this->emailVerificationToken = $token;
+        $this->emailVerificationTokenRequestedAt = $token ? new \DateTimeImmutable() : null;
+
+        return $this;
+    }
+
+    public function getEmailVerificationTokenRequestedAt(): ?\DateTimeImmutable
+    {
+        return $this->emailVerificationTokenRequestedAt;
+    }
+
+    public function setEmailVerificationTokenRequestedAt(?\DateTimeImmutable $dateTime): self
+    {
+        $this->emailVerificationTokenRequestedAt = $dateTime;
         return $this;
     }
 

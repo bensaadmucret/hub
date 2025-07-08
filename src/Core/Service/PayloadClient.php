@@ -19,7 +19,7 @@ class PayloadClient
     public function __construct(
         string $payloadApiUrl,
         string $payloadApiKey,
-        HttpClientInterface $client = null
+        ?HttpClientInterface $client = null
     ) {
         $this->apiUrl = rtrim($payloadApiUrl, '/');
         $this->apiKey = $payloadApiKey;
@@ -31,9 +31,9 @@ class PayloadClient
      *
      * @param string $method Méthode HTTP (GET, POST, PATCH, DELETE)
      * @param string $endpoint Endpoint de l'API (ex: 'users', 'posts/123')
-     * @param array $data Données à envoyer (pour POST/PATCH)
+     * @param array<string, mixed> $data Données à envoyer (pour POST/PATCH)
      * @param string|null $jwt JWT pour l'authentification
-     * @return array
+     * @return array<string, mixed>
      * @throws \Exception
      */
     public function request(string $method, string $endpoint, array $data = [], ?string $jwt = null): array
@@ -69,7 +69,11 @@ class PayloadClient
             $content = $response->getContent(false);
 
             if ($statusCode >= 200 && $statusCode < 300) {
-                return $content ? json_decode($content, true) : [];
+                if (empty($content)) {
+                    return [];
+                }
+                $decoded = json_decode($content, true);
+                return is_array($decoded) ? $decoded : [];
             }
 
             $errorData = [
@@ -79,8 +83,13 @@ class PayloadClient
 
             if ($content) {
                 $decodedContent = json_decode($content, true);
-                $errorData['message'] = $decodedContent['message'] ?? $errorData['message'];
-                $errorData['details'] = $decodedContent['errors'] ?? null;
+                if (is_array($decodedContent)) {
+                    $message = $decodedContent['message'] ?? $errorData['message'];
+                    if (is_scalar($message)) {
+                        $errorData['message'] = (string) $message;
+                    }
+                    $errorData['details'] = $decodedContent['errors'] ?? null;
+                }
             }
 
             throw new \RuntimeException(
@@ -94,7 +103,12 @@ class PayloadClient
 
             if ($content) {
                 $decoded = json_decode($content, true);
-                $message = $decoded['message'] ?? $message;
+                if (is_array($decoded) && isset($decoded['message'])) {
+                    $decodedMessage = $decoded['message'];
+                    if (is_scalar($decodedMessage)) {
+                        $message = (string) $decodedMessage;
+                    }
+                }
             }
 
             throw new \RuntimeException($message, $statusCode, $e);
@@ -107,6 +121,8 @@ class PayloadClient
 
     /**
      * Raccourci pour les requêtes GET
+     * @param array<string, mixed> $query
+     * @return array<string, mixed>
      */
     public function get(string $endpoint, array $query = [], ?string $jwt = null): array
     {
@@ -115,6 +131,8 @@ class PayloadClient
 
     /**
      * Raccourci pour les requêtes POST
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
      */
     public function post(string $endpoint, array $data = [], ?string $jwt = null): array
     {
@@ -123,6 +141,8 @@ class PayloadClient
 
     /**
      * Raccourci pour les requêtes PATCH
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
      */
     public function patch(string $endpoint, array $data = [], ?string $jwt = null): array
     {
@@ -131,6 +151,7 @@ class PayloadClient
 
     /**
      * Raccourci pour les requêtes DELETE
+     * @return array<string, mixed>
      */
     public function delete(string $endpoint, ?string $jwt = null): array
     {

@@ -35,7 +35,7 @@ class PayloadProxyController extends AbstractController
                 'pagination' => [
                     'page' => $response['page'] ?? 1,
                     'limit' => $response['limit'] ?? 10,
-                    'total' => $response['totalDocs'] ?? count($response['docs'] ?? []),
+                    'total' => $response['totalDocs'] ?? (is_array($response['docs'] ?? null) ? count($response['docs']) : 0),
                     'totalPages' => $response['totalPages'] ?? 1,
                 ],
             ]);
@@ -74,7 +74,10 @@ class PayloadProxyController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
 
-        $data = json_decode($request->getContent(), true);
+        $data = json_decode($request->getContent(), true) ?? [];
+        if (!is_array($data)) {
+            $data = [];
+        }
         $jwt = $request->headers->get('Authorization');
 
         try {
@@ -97,7 +100,10 @@ class PayloadProxyController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
 
-        $data = json_decode($request->getContent(), true);
+        $data = json_decode($request->getContent(), true) ?? [];
+        if (!is_array($data)) {
+            $data = [];
+        }
         $jwt = $request->headers->get('Authorization');
 
         try {

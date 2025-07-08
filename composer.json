@@ -90,6 +90,13 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
+        ],
+        "lint": [
+            "phpstan analyse -c phpstan.dist.neon --memory-limit=512M",
+            "phpcs --standard=phpcs.xml.dist"
+        ],
+        "lint-fix": [
+            "phpcbf --standard=phpcs.xml.dist"
         ]
     },
     "conflict": {

@@ -47,23 +47,49 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->save($user, true);
     }
 
+    /**
+     * @return User|null
+     */
     public function findOneByEmail(string $email): ?User
     {
-        return $this->createQueryBuilder('u')
+        /** @var User|null $result */
+        $result = $this->createQueryBuilder('u')
             ->where('u.email = :email')
             ->setParameter('email', strtolower($email))
             ->getQuery()
             ->getOneOrNullResult();
+        return $result;
     }
 
+    /**
+     * @return User|null
+     */
     public function findActiveUserByEmail(string $email): ?User
     {
-        return $this->createQueryBuilder('u')
+        /** @var User|null $result */
+        $result = $this->createQueryBuilder('u')
             ->where('u.email = :email')
             ->andWhere('u.isActive = :isActive')
             ->setParameter('email', strtolower($email))
             ->setParameter('isActive', true)
             ->getQuery()
             ->getOneOrNullResult();
+        return $result;
+    }
+
+    /**
+     * @return User|null
+     */
+    public function findOneByResetToken(string $token): ?User
+    {
+        /** @var User|null $result */
+        $result = $this->createQueryBuilder('u')
+            ->where('u.resetToken = :token')
+            ->andWhere('u.resetTokenExpiresAt > :now')
+            ->setParameter('token', $token)
+            ->setParameter('now', new \DateTimeImmutable())
+            ->getQuery()
+            ->getOneOrNullResult();
+        return $result;
     }
 }

@@ -40,16 +40,34 @@ class CreateUserCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        
+
         $email = $input->getArgument('email');
+        if (!is_string($email)) {
+            $io->error('Email must be a string.');
+            return Command::FAILURE;
+        }
+
         $password = $input->getArgument('password');
-        $isAdmin = $input->getOption('admin');
+        if (!is_string($password)) {
+            $io->error('Password must be a string.');
+            return Command::FAILURE;
+        }
+
+        $isAdmin = (bool) $input->getOption('admin');
+
         $firstName = $input->getOption('first-name');
+        if (!is_string($firstName)) {
+            $firstName = '';
+        }
+
         $lastName = $input->getOption('last-name');
+        if (!is_string($lastName)) {
+            $lastName = '';
+        }
 
         // Vérifier si l'utilisateur existe déjà
         $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
-        
+
         if ($existingUser) {
             $io->error(sprintf('User with email %s already exists!', $email));
             return Command::FAILURE;
@@ -60,18 +78,18 @@ class CreateUserCommand extends Command
         $user->setEmail($email);
         $user->setFirstName($firstName);
         $user->setLastName($lastName);
-        
+
         // Définir les rôles
         $roles = ['ROLE_USER'];
         if ($isAdmin) {
             $roles[] = 'ROLE_ADMIN';
         }
         $user->setRoles($roles);
-        
+
         // Hasher le mot de passe
         $hashedPassword = $this->passwordHasher->hashPassword($user, $password);
         $user->setPassword($hashedPassword);
-        
+
         // Activer et vérifier l'email pour les comptes créés en ligne de commande
         $user->setIsActive(true);
         $user->setIsEmailVerified(true);
@@ -82,7 +100,7 @@ class CreateUserCommand extends Command
         $this->entityManager->flush();
 
         $io->success(sprintf('User %s was created successfully!', $email));
-        
+
         if ($isAdmin) {
             $io->note('This user has admin privileges.');
         }

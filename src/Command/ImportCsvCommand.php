@@ -47,12 +47,12 @@ class ImportCsvCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $stopwatch = new Stopwatch();
         $stopwatch->start('import');
-        $filePath = $this->projectDir . '/import/csv/' . $input->getArgument('file') ?? '';
-
-        if (!is_string($filePath)) {
-            $io->error('Le chemin du fichier doit être une chaîne de caractères');
+        $fileArgument = $input->getArgument('file');
+        if (!is_string($fileArgument)) {
+            $io->error('L\'argument `file` doit être une chaîne de caractères.');
             return Command::FAILURE;
         }
+        $filePath = $this->projectDir . '/import/csv/' . $fileArgument;
 
         // Si le chemin est relatif, on le rend absolu par rapport au répertoire du projet
         $fullPath = !file_exists($filePath) ? $this->projectDir . '/' . ltrim($filePath, '/') : $filePath;

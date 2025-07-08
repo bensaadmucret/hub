@@ -12,8 +12,12 @@ class OnboardingEvent extends Event
     private User $user;
     private string $fromState;
     private string $toState;
+    /** @var array<string, mixed> */
     private array $context;
 
+    /**
+     * @param array<string, mixed> $context
+     */
     public function __construct(User $user, string $fromState, string $toState, array $context = [])
     {
         $this->user = $user;
@@ -37,11 +41,17 @@ class OnboardingEvent extends Event
         return $this->toState;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getContext(): array
     {
         return $this->context;
     }
 
+    /**
+     * @param array<string, mixed> $context
+     */
     public function setContext(array $context): self
     {
         $this->context = $context;

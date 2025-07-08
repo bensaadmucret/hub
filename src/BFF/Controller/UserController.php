@@ -5,7 +5,9 @@ namespace App\BFF\Controller;
 use App\Core\Entity\User;
 use App\Core\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -59,9 +61,15 @@ class UserController extends BaseApiController
     public function create(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
+            return $this->createErrorResponse('Invalid JSON payload', [], Response::HTTP_BAD_REQUEST);
+        }
 
         $user = new User();
-        $user->setEmail($data['email'] ?? '');
+        if (!isset($data['email']) || !is_string($data['email'])) {
+            return $this->createErrorResponse('Validation failed', ['email' => 'Email must be a string.'], Response::HTTP_BAD_REQUEST);
+        }
+        $user->setEmail($data['email']);
 
         if (isset($data['password'])) {
             $user->setPlainPassword($data['password']);
@@ -87,7 +95,11 @@ class UserController extends BaseApiController
         }
 
         // Vérifier si l'email est déjà utilisé
-        $existingUser = $this->userRepository->findOneByEmail($user->getEmail());
+        $email = $user->getEmail();
+        if (empty($email)) {
+            return $this->createErrorResponse('Validation failed', ['email' => 'Email cannot be empty.'], Response::HTTP_BAD_REQUEST);
+        }
+        $existingUser = $this->userRepository->findOneByEmail($email);
         if ($existingUser) {
             return $this->createErrorResponse(
                 'Email already in use',
@@ -145,9 +157,15 @@ class UserController extends BaseApiController
         }
 
         $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
+            return $this->createErrorResponse('Invalid JSON payload', [], Response::HTTP_BAD_REQUEST);
+        }
 
         // Mise à jour des champs
         if (isset($data['email'])) {
+            if (!is_string($data['email'])) {
+                return $this->createErrorResponse('Validation failed', ['email' => 'Email must be a string.'], Response::HTTP_BAD_REQUEST);
+            }
             $user->setEmail($data['email']);
         }
 
@@ -221,6 +239,8 @@ class UserController extends BaseApiController
 
     /**
      * Sérialise un utilisateur en tableau
+     *
+     * @return array<string, mixed>
      */
     private function serializeUser(User $user): array
     {

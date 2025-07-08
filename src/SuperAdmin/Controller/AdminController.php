@@ -22,6 +22,13 @@ class AdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            // This check is mainly for static analysis, as denyAccessUnlessGranted should prevent this.
+            throw $this->createAccessDeniedException('This action requires an authenticated user.');
+        }
+
         $userRepository = $this->entityManager->getRepository(User::class);
         $totalUsers = $userRepository->count([]);
 
@@ -31,9 +38,9 @@ class AdminController extends AbstractController
                 'total_users' => $totalUsers,
             ],
             'user' => [
-                'id' => $this->getUser()->getId(),
-                'email' => $this->getUser()->getUserIdentifier(),
-                'roles' => $this->getUser()->getRoles(),
+                'id' => $user->getId(),
+                'email' => $user->getUserIdentifier(),
+                'roles' => $user->getRoles(),
             ],
         ]);
     }

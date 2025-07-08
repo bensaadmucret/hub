@@ -93,7 +93,7 @@ clean:
 
 ## Vérifie les fichiers JavaScript avec ESLint
 lint:
-	npm run lint
+	composer lint
 
 ## Gestion Docker
 docker-build:

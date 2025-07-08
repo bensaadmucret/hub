@@ -4,55 +4,57 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Entity\ImportRecord;
-use App\Service\Dto\ImportRowDto;
+use App\Core\Entity\User;
 use App\Exception\InvalidCsvRowException;
-use App\Repository\ImportRecordRepository;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-/**
- * Service d'importation de fichiers CSV
- */
 class CsvImporter
 {
     public function __construct(
-        private readonly ImportRecordRepository $importRecordRepository,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly UserPasswordHasherInterface $passwordHasher,
         private readonly ValidatorInterface $validator
     ) {
     }
 
-    /**
-     * Importe un fichier CSV dans la base de données
-     *
-     * @param string $filePath Chemin vers le fichier CSV
-     *
-     * @throws \RuntimeException Si le fichier n'existe pas, est illisible ou mal formé
-     */
-    public function import(string $filePath): void
+    public function import(string $filePath, int $batchSize = 100): void
     {
         if (!file_exists($filePath) || !is_readable($filePath)) {
-            throw new \RuntimeException(sprintf('Le fichier "%s" n\'existe pas ou est illisible', $filePath));
+            throw new \RuntimeException(sprintf('Le fichier "%s" n\'existe pas ou est illisible.', $filePath));
         }
 
         $handle = fopen($filePath, 'r');
         if ($handle === false) {
-            throw new \RuntimeException(sprintf('Impossible d\'ouvrir le fichier "%s"', $filePath));
+            throw new \RuntimeException(sprintf('Impossible d\'ouvrir le fichier "%s".', $filePath));
         }
 
         try {
-            $header = fgetcsv($handle, 0, ';');
-
-            if ($header === false) {
-                throw new \RuntimeException('Le fichier CSV est vide ou mal formé');
+            $header_raw = fgetcsv($handle, 0, ';');
+            if ($header_raw === false) {
+                throw new \RuntimeException('Le fichier CSV est vide ou mal formé.');
             }
+            /** @var array<string> $header */
+            $header = array_map('strval', $header_raw);
 
             $lineNumber = 1;
-
+            $i = 0;
             while (($row = fgetcsv($handle, 0, ';')) !== false) {
                 $lineNumber++;
-                $this->processRow($row, $lineNumber);
+                if (count($header) !== count($row)) {
+                    continue; // Skip malformed rows
+                }
+                $data = array_combine($header, $row);
+                $this->processRow($data, $lineNumber);
+
+                if (($i % $batchSize) === 0) {
+                    $this->entityManager->flush();
+                    $this->entityManager->clear();
+                }
+                $i++;
             }
+            $this->entityManager->flush();
         } finally {
             if (is_resource($handle)) {
                 fclose($handle);
@@ -61,51 +63,37 @@ class CsvImporter
     }
 
     /**
-     * Traite une ligne du fichier CSV
-     *
-     * @param array<int, string|null> $row La ligne à traiter
-     * @param int $lineNumber Le numéro de la ligne en cours de traitement
-     * @throws InvalidCsvRowException Si la ligne n'est pas valide
+     * @param array<string, mixed> $data
      */
-    private function processRow(array $row, int $lineNumber): void
+    private function processRow(array $data, int $lineNumber): void
     {
-        // Créer un tableau associatif à partir des valeurs de la ligne
-        // En supposant que les colonnes sont dans l'ordre: name, email, amount
-        $name = $row[0] ?? '';
-        $email = $row[1] ?? '';
-        $amount = $row[2] ?? null;
+        $email = isset($data['email']) && is_string($data['email']) ? trim($data['email']) : null;
+        $password = isset($data['password']) && is_string($data['password']) ? $data['password'] : null;
+        $firstName = isset($data['firstName']) && is_string($data['firstName']) ? trim($data['firstName']) : null;
+        $lastName = isset($data['lastName']) && is_string($data['lastName']) ? trim($data['lastName']) : null;
 
-        $rowData = [
-            'name' => $name,
-            'email' => $email,
-            'amount' => $amount,
-        ];
+        if (empty($email) || empty($password)) {
+            throw new InvalidCsvRowException(sprintf('L\'email et le mot de passe sont requis à la ligne %d.', $lineNumber));
+        }
 
-        $dto = new ImportRowDto($rowData);
+        $user = new User();
+        $user->setEmail($email);
+        $user->setFirstName($firstName);
+        $user->setLastName($lastName);
 
-        // Valider le DTO
-        $violations = $this->validator->validate($dto);
+        $hashedPassword = $this->passwordHasher->hashPassword($user, $password);
+        $user->setPassword($hashedPassword);
 
+        $violations = $this->validator->validate($user);
         if ($violations->count() > 0) {
+            /** @var array<string, array<string>> $errors */
             $errors = [];
             foreach ($violations as $violation) {
-                $errors[$violation->getPropertyPath()] = [(string)$violation->getMessage()];
+                $errors[$violation->getPropertyPath()] = [(string) $violation->getMessage()];
             }
-
-            throw new InvalidCsvRowException(
-                sprintf('Erreur de validation à la ligne %d', $lineNumber),
-                $errors
-            );
+            throw new InvalidCsvRowException(sprintf('Erreur de validation à la ligne %d.', $lineNumber), $errors);
         }
 
-        $importRecord = new ImportRecord();
-        $importRecord->setName((string)$dto->getName());
-        $importRecord->setEmail((string)$dto->getEmail());
-
-        if ($dto->getAmount() !== null) {
-            $importRecord->setAmount((string)$dto->getAmount());
-        }
-
-        $this->importRecordRepository->save($importRecord);
+        $this->entityManager->persist($user);
     }
 }
