@@ -68,3 +68,6 @@ Thumbs.db
 /config/jwt/*.pem
 config/jwt/*.pem
 
+
+# Ignore le projet Payload CMS imbriqué
+payload-cms/
