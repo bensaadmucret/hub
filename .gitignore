@@ -71,3 +71,9 @@ config/jwt/*.pem
 
 # Ignore le projet Payload CMS imbriqué
 payload-cms/
+
+# Ignore l'application React/Vite du tableau de bord étudiant
+dashboard-app/
+
+*storybook.log
+storybook-static
