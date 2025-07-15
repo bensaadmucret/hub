@@ -13,3 +13,4 @@ bff_controllers:
     type: attribute
     # Le préfixe est déjà défini dans l'attribut de route du contrôleur
     name_prefix: app_bff_
+

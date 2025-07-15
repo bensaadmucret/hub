@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{# Configuration du SEO de la page #}
+{% block title %}{{ page.metaTitle|default(page.title) }}{% endblock %}
+{% block meta_description %}{{ page.metaDescription|default('') }}{% endblock %}
+
+{% block body %}
+    <main>
+        {# On trie les sections par leur position pour garantir le bon ordre d'affichage #}
+        {% for section in page.sections|sort((a, b) => a.position <=> b.position) %}
+            {# 
+                On inclut le template partiel.
+                On passe le contenu ('content') et un 'id' pour les ancres de navigation.
+            #}
+            {% include 'sections/_' ~ section.type ~ '.html.twig' ignore missing with { 'content': section.content, 'id': section.type } %}
+        {% endfor %}
+    </main>
+{% endblock %}

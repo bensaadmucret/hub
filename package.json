@@ -2,9 +2,13 @@
     "devDependencies": {
         "@babel/core": "^7.17.0",
         "@babel/preset-env": "^7.16.0",
+        "@symfony/stimulus-bridge": "^4.0.1",
         "@symfony/webpack-encore": "^5.0.0",
+        "autoprefixer": "^10.4.21",
         "core-js": "^3.38.0",
+        "postcss": "^8.5.6",
         "regenerator-runtime": "^0.13.9",
+        "tailwindcss": "^4.1.11",
         "webpack": "^5.74.0",
         "webpack-cli": "^5.1.0"
     },
@@ -15,5 +19,8 @@
         "dev": "encore dev",
         "watch": "encore dev --watch",
         "build": "encore production --progress"
+    },
+    "dependencies": {
+        "@symfony/ux-turbo": "^2.27.0"
     }
 }

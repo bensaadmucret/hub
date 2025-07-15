@@ -1,0 +1,22 @@
+{# templates/sections/_cta.html.twig #}
+{% if content %}
+<div class="container my-5">
+    <section class="gradient-bg text-white py-16" id="{{ id|default('cta') }}">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl font-bold mb-6">{{ content.title|default('Prêt à révolutionner votre préparation ?') }}</h2>
+        <p class="text-xl mb-8 max-w-3xl mx-auto text-indigo-100">{{ content.subtitle|default("Rejoignez des milliers d'étudiants en médecine qui ont déjà adopté MedCoach.") }}</p>
+        <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+            {% if content.button_text and content.button_link %}
+                <a href="{{ content.button_link }}" class="bg-white text-indigo-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition duration-300 flex items-center justify-center">
+                    <i class="fas fa-calendar-check mr-2"></i> {{ content.button_text }}
+                </a>
+            {% endif %}
+            {% if content.secondary_button_text and content.secondary_button_link %}
+                <a href="{{ content.secondary_button_link }}" class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition duration-300 flex items-center justify-center">
+                    <i class="fas fa-envelope mr-2"></i> {{ content.secondary_button_text }}
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}

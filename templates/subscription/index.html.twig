@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Abonnement | MedCoach{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<link rel="stylesheet" href="{{ asset('build/app.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <h1 class="mb-4">Page d'abonnement</h1>
+    <p>Bienvenue sur la page d'abonnement à MedCoach. (Personnalisez ce contenu selon vos besoins.)</p>
+    <a href="{{ path('home') }}" class="btn btn-primary mt-3">Retour à l'accueil</a>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+{% endblock %}

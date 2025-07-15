@@ -1,0 +1,7 @@
+easy_admin:
+    design:
+        assets:
+            extra_css:
+                - 'build/app.css'
+            extra_js:
+                - 'build/app.js'

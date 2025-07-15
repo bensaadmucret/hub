@@ -48,18 +48,21 @@ security:
         main:
             lazy: true
             provider: app_user_provider
-            json_login:
-                check_path: app_login
-                username_path: email
-                password_path: password
-                success_handler: lexik_jwt_authentication.handler.authentication_success
-                failure_handler: lexik_jwt_authentication.handler.authentication_failure
             form_login:
                 login_path: app_login
                 check_path: app_login
+                enable_csrf: true
+                default_target_path: /admin
+            custom_authenticator: App\Security\AppCustomAuthenticator
             logout:
                 path: app_logout
                 target: app_home
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 604800
+                path: /
+                always_remember_me: true
+            entry_point: form_login
 
     # Easy way to control access for large sections of your site
     access_control:

@@ -1,0 +1,24 @@
+{# templates/sections/_advantages.html.twig #}
+{% if content %}
+<section id="{{ id|default('advantages') }}" class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">{{ content.main_title|default('Pourquoi Choisir MedCoach ?') }}</h2>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">{{ content.main_subtitle|default('Notre solution se distingue par des atouts uniques sur le marché') }}</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-12">
+            {% for card in content.cards|default([]) %}
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 {{ card.icon_bg|default('bg-indigo-100') }} p-3 rounded-lg">
+                        <i class="{{ card.icon|default('fas fa-bolt text-indigo-600 text-xl') }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-semibold text-gray-900">{{ card.title|default('Titre avantage') }}</h4>
+                        <p class="mt-1 text-gray-600">{{ card.description|default('Description de l\'avantage') }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}

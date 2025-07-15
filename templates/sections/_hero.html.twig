@@ -1,0 +1,33 @@
+{# templates/sections/_hero.html.twig #}
+{% if content %}
+    {# templates/sections/_hero.html.twig #}
+{# L'ID est passé depuis show.html.twig pour permettre la navigation par ancre #}
+<section id="{{ id|default('hero') }}" class="gradient-bg text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
+        <div class="md:flex md:items-center md:justify-between">
+            <div class="md:w-1/2 mb-10 md:mb-0">
+                <h1 class="text-4xl md:text-5xl font-bold leading-tight mb-6">
+                    {{ content.title|default('Titre de la section Hero') }}
+                </h1>
+                <p class="text-xl mb-8 text-indigo-100">
+                    {{ content.subtitle|default('Sous-titre de la section Hero.') }}
+                </p>
+                
+                {# On affiche le bouton seulement si le texte et le lien sont définis dans l'admin #}
+                {% if content.button_text and content.button_link %}
+                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                    <a href="{{ content.button_link }}" class="bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition duration-300 flex items-center justify-center pulse-animation">
+                        <i class="fas fa-rocket mr-2"></i> {{ content.button_text }}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="md:w-1/2 flex justify-center">
+                {# L'image est statique pour le moment. On pourra la rendre dynamique plus tard. #}
+                <img src="https://illustrations.popsy.co/amber/digital-nomad.svg" alt="Hero Illustration" class="w-full max-w-md floating">
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endif %}

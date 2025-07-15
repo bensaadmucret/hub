@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}MedCoach - Votre coach personnel intelligent{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<link rel="stylesheet" href="{{ asset('build/app.css') }}">
+{% endblock %}
+
+{% block body %}
+    <div class="hero" data-controller="hero">
+        <h1>{{ cta.title|default('') }}</h1>
+        <p class="lead">{{ cta.subtitle|default('') }}</p>
+        <a href="{{ path('app_bff_subscription') }}" class="cta-button" data-action="click->hero#scrollToFeatures">
+            {{ cta.button_text|default('') }}
+        </a>
+    </div>
+
+    <div class="features" data-controller="features">
+        <div class="container">
+            <div class="row">
+                {% if features is defined and features|length > 0 %}
+    {% for feature in features %}
+        <div class="col-md-6 col-lg-3 mb-4" data-features-target="card">
+            <div class="feature-card">
+                <div class="icon">
+                    <i class="fas fa-{{ feature.icon|default('') }}"></i>
+                </div>
+                <h3>{{ feature.title|default('') }}</h3>
+                <p>{{ feature.description|default('') }}</p>
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+{% endblock %}

@@ -1,0 +1,14 @@
+{# templates/sections/_contact.html.twig #}
+{% if content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 text-center">
+            <h2 class="display-5">{{ content.title|default('Contactez-nous') }}</h2>
+            {% if content.subtitle %}
+                <p class="lead text-muted">{{ content.subtitle }}</p>
+            {% endif %}
+            {# L'emplacement pour le futur formulaire de contact pourra être ajouté ici #}
+        </div>
+    </div>
+</div>
+{% endif %}
