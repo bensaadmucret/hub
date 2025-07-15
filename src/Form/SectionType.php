@@ -41,7 +41,7 @@ class SectionType extends AbstractType
 
         // Cette fonction écoute les événements du formulaire pour ajouter
         // le bon champ "content" en fonction du type de section choisi.
-        $formModifier = function (FormInterface $form, string $type = null) {
+        $formModifier = function (FormInterface $form, ?string $type) {
             if ($type === null) {
                 return;
             }
