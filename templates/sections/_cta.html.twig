@@ -11,7 +11,7 @@
                     <i class="fas fa-calendar-check mr-2"></i> {{ content.button_text }}
                 </a>
             {% endif %}
-            {% if content.secondary_button_text and content.secondary_button_link %}
+            {% if content.secondary_button_text|default and content.secondary_button_link|default %}
                 <a href="{{ content.secondary_button_link }}" class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition duration-300 flex items-center justify-center">
                     <i class="fas fa-envelope mr-2"></i> {{ content.secondary_button_text }}
                 </a>

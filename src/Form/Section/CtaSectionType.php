@@ -25,7 +25,15 @@ class CtaSectionType extends AbstractType
                 'label' => 'Texte du bouton',
             ])
             ->add('button_link', UrlType::class, [
-                'label' => 'Lien du bouton',
+                'label' => 'Lien du bouton principal',
+            ])
+            ->add('secondary_button_text', TextType::class, [
+                'label' => 'Texte du bouton secondaire',
+                'required' => false,
+            ])
+            ->add('secondary_button_link', UrlType::class, [
+                'label' => 'Lien du bouton secondaire',
+                'required' => false,
             ]);
     }
 
