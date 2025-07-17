@@ -69,15 +69,31 @@
                     {% endif %}
                 </label>
                 
-                {% if field.type == 'textarea' %}
+                {% if field.name == 'phone' %}
+                    <input 
+                        type="tel" 
+                        id="{{ field.name }}" 
+                        name="{{ field.name }}"
+                        class="mt-1 block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base {% if field.error is defined and field.error %}border-red-500{% endif %}"
+                        placeholder="{{ field.placeholder|default('') }}"
+                        {% if field.required %}required{% endif %}
+                        value="{{ field.value|default('') }}"
+                        aria-describedby="{{ field.name }}-error"
+                        {% if field.error is defined and field.error %}aria-invalid="true"{% endif %}
+                        style="min-height: 3.5rem;"
+                        pattern="[0-9+\-\s()]*"
+                        oninput="this.value = this.value.replace(/[^0-9+\-\s()]/g, '');"
+                    >
+                {% elseif field.type == 'textarea' %}
                     <textarea 
                         id="{{ field.name }}" 
                         name="{{ field.name }}"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm {% if field.error is defined and field.error %}border-red-500{% endif %}"
+                        class="mt-1 block w-full h-40 px-3 py-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base {% if field.error is defined and field.error %}border-red-500{% endif %}"
                         placeholder="{{ field.placeholder|default('') }}"
                         {% if field.required %}required{% endif %}
                         aria-describedby="{{ field.name }}-error"
                         {% if field.error is defined and field.error %}aria-invalid="true"{% endif %}
+                        style="min-height: 10rem; resize: vertical;"
                     >{{ field.value|default('') }}</textarea>
                 {% elseif field.type == 'select' and field.options is defined %}
                     <select
@@ -106,17 +122,20 @@
                         {% endif %}
                     </select>
                 {% else %}
+                    {% if field.type != 'tel' %}
                     <input 
                         type="{{ field.type }}" 
                         id="{{ field.name }}" 
                         name="{{ field.name }}"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm {% if field.error is defined and field.error %}border-red-500{% endif %}"
+                        class="mt-1 block w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base {% if field.error is defined and field.error %}border-red-500{% endif %}"
                         placeholder="{{ field.placeholder|default('') }}"
                         {% if field.required %}required{% endif %}
                         value="{{ field.value|default('') }}"
                         aria-describedby="{{ field.name }}-error"
                         {% if field.error is defined and field.error %}aria-invalid="true"{% endif %}
+                        style="min-height: 3.5rem;"
                     >
+                    {% endif %}
                 {% endif %}
                 {% if field.error is defined and field.error %}
                     <p id="{{ field.name }}-error" class="mt-2 text-sm text-red-600">{{ field.error }}</p>

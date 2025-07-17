@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Contact;
+
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
@@ -11,7 +12,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TelephoneField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
@@ -19,11 +19,17 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Repository\ContactRepository;
 
+#[Route('/admin/contact')]
+#[IsGranted('ROLE_ADMIN')]
 class ContactCrudController extends AbstractCrudController
 {
     public function __construct(
-        private AdminUrlGenerator $adminUrlGenerator
+        private AdminUrlGenerator $adminUrlGenerator,
+        private ContactRepository $contactRepository
     ) {
     }
     public static function getEntityFqcn(): string
@@ -43,7 +49,8 @@ class ContactCrudController extends AbstractCrudController
             ->setEntityPermission('ROLE_ADMIN')
             ->showEntityActionsInlined()
             ->setPaginatorPageSize(30)
-            ->overrideTemplate('crud/index', 'admin/contact/index.html.twig');
+            ->overrideTemplate('crud/index', 'admin/contact/index.html.twig')
+            ->setDefaultSort(['submittedAt' => 'DESC']);
     }
 
     public function configureActions(Actions $actions): Actions
@@ -55,10 +62,7 @@ class ContactCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         return [
-            IdField::new('id')
-                ->hideOnForm(),
             TextField::new('name', 'Nom')
-                ->setTemplatePath('admin/fields/contact_name.html.twig')
                 ->formatValue(function ($value, $entity) {
                     $url = $this->adminUrlGenerator
                         ->setController(self::class)
@@ -68,8 +72,7 @@ class ContactCrudController extends AbstractCrudController
                     
                     return sprintf('<a href="%s">%s</a>', $url, $value);
                 }),
-            EmailField::new('email', 'Email')
-                ->setTemplatePath('admin/fields/email.html.twig'),
+            EmailField::new('email', 'Email'),
             TelephoneField::new('phone', 'Téléphone')
                 ->hideOnIndex(),
             TextField::new('subject', 'Sujet')
@@ -86,6 +89,7 @@ class ContactCrudController extends AbstractCrudController
                 ->setHelp('A accepté la politique de confidentialité'),
         ];
     }
+
 
     public function configureFilters(Filters $filters): Filters
     {

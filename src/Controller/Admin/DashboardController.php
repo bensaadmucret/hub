@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Core\Entity\User;
+use App\Entity\Contact;
 use App\Entity\Page;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
@@ -41,6 +42,9 @@ class DashboardController extends AbstractDashboardController
 
         yield MenuItem::section('Gestion du contenu');
         yield MenuItem::linkToCrud('Pages', 'fas fa-file-alt', Page::class);
+        
+        yield MenuItem::section('Gestion des contacts');
+        yield MenuItem::linkToCrud('Messages de contact', 'fas fa-envelope', Contact::class);
 
         yield MenuItem::section('Utilisateurs');
         yield MenuItem::linkToCrud('Utilisateurs', 'fas fa-users', User::class);

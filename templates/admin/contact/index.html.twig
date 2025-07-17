@@ -1,0 +1,37 @@
+{% extends '@!EasyAdmin/crud/index.html.twig' %}
+
+{% block main %}
+    {{ parent() }}
+{% endblock %}
+
+{% block body_javascript %}
+    {{ parent() }}
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gestion du clic sur une ligne pour accéder au détail
+            document.querySelectorAll('tr[data-action-detail]').forEach(function(row) {
+                row.style.cursor = 'pointer';
+                row.addEventListener('click', function(e) {
+                    // Ne pas déclencher si on clique sur un lien ou un bouton
+                    if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('a, button')) {
+                        return;
+                    }
+                    
+                    window.location.href = this.getAttribute('data-action-detail');
+                });
+            });
+            
+            // Empêcher la soumission du formulaire si la recherche est vide
+            const searchForm = document.querySelector('form[method="get"]');
+            if (searchForm) {
+                searchForm.addEventListener('submit', function(e) {
+                    const searchInput = this.querySelector('input[name="query"]');
+                    if (searchInput && !searchInput.value.trim()) {
+                        e.preventDefault();
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %}
