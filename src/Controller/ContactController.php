@@ -14,6 +14,9 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 final class ContactController extends AbstractController
 {
@@ -21,7 +24,8 @@ final class ContactController extends AbstractController
         private readonly ContactService $contactService,
         private readonly LoggerInterface $logger,
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
-        private readonly ValidatorInterface $validator
+        private readonly ValidatorInterface $validator,
+        private readonly SerializerInterface $serializer
     ) {
     }
 
@@ -51,41 +55,27 @@ final class ContactController extends AbstractController
             }
 
             try {
-                // Création du DTO à partir des données du formulaire
-                $dto = new ContactDto();
-                
-                // Récupération dynamique des champs du formulaire
+
                 $formData = $request->request->all();
+                $consentValue = $formData['consent'] ?? null;
+                unset($formData['consent']);
                 
-                // Mappage des champs du formulaire vers le DTO
-                foreach ($formData as $field => $value) {
-                    if (property_exists($dto, $field)) {
-                        // Conversion des types si nécessaire
-                        $reflection = new \ReflectionProperty($dto, $field);
-                        $type = $reflection->getType();
-                        
-                        if ($type && !$type->isBuiltin()) {
-                            continue;
-                        }
-                        
-                        // Gestion spéciale pour le consentement
-                        if ($field === 'consent') {
-                            $dto->$field = ($value === '1' || $value === true || $value === 'true');
-                            continue;
-                        }
-                        
-                        $value = match ($type ? $type->getName() : '') {
-                            'int' => (int) $value,
-                            'float' => (float) $value,
-                            'bool' => (bool) $value,
-                            default => is_string($value) ? trim($value) : $value
-                        };
-                        
-                        $dto->$field = $value;
-                    }
+                $jsonData = json_encode($formData);
+                $dto = $this->serializer->deserialize(
+                    $jsonData,
+                    ContactDto::class,
+                    'json',
+                    [
+                        AbstractNormalizer::OBJECT_TO_POPULATE => new ContactDto(),
+                        AbstractNormalizer::IGNORED_ATTRIBUTES => ['_token', 'website']
+                    ]
+                );
+                
+                // Appliquer la logique de conversion après la désérialisation
+                if (isset($consentValue)) {
+                    $dto->consent = ($consentValue === '1' || $consentValue === true || $consentValue === 'true');
                 }
                 
-                // Validation du DTO
                 $errors = $this->validator->validate($dto);
                 
                 if (count($errors) > 0) {
@@ -107,7 +97,6 @@ final class ContactController extends AbstractController
                     return $this->redirect($request->headers->get('referer', $this->generateUrl('app_home')));
                 }
                 
-                // Traitement du formulaire via le service
                 $this->contactService->process($dto);
                 
                 if ($request->isXmlHttpRequest()) {
@@ -135,12 +124,12 @@ final class ContactController extends AbstractController
             }
         }
 
-        // Si c'est une requête AJAX, on retourne une réponse JSON vide
+        // Si c'est une requête AJAX, on retourne une réponse 204 No Content
         if ($request->isXmlHttpRequest()) {
-            return $this->json([], 200);
+            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+
         }
         
-        // Sinon, on redirige vers la page d'accueil avec une ancre vers la section contact
         return $this->redirect($this->generateUrl('app_home') . '#contact');
     }
 }
