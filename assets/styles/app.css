@@ -1,3 +1,112 @@
+@import "tailwindcss";
+
+
+:root {
+    --primary: #4F46E5;
+    --secondary: #10B981;
+    --accent: #F59E0B;
+    --dark: #1F2937;
+    --light: #F9FAFB;
+}
+
 body {
-    background-color: skyblue;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.gradient-bg {
+    background: linear-gradient(135deg, var(--primary) 0%, #7C3AED 100%);
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.pulse-animation {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.floating {
+    animation: floating 6s ease-in-out infinite;
+}
+
+@keyframes floating {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0px); }
+}
+
+/* Styles pour le conteneur d'options */
+.select-options-container {
+    margin-top: 1rem;
+    transition: all 0.3s ease-in-out;
+    opacity: 0;
+    display: none;
+    animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.select-options {
+    margin-bottom: 1rem;
+}
+
+.option-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+}
+
+.option-item:hover {
+    background-color: #e9ecef;
+}
+
+.add-option-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.remove-option-btn {
+    color: #dc3545;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    transition: all 0.2s;
+}
+
+.remove-option-btn:hover {
+    background-color: #f8d7da;
+}
+
+/* Styles pour les champs de formulaire dans les options */
+.option-item .form-control {
+    flex-grow: 1;
+    margin-right: 0.5rem;
+}
+
+/* Animation pour les nouveaux éléments */
+@keyframes highlight {
+    from { background-color: #e3f2fd; }
+    to { background-color: transparent; }
+}
+
+.option-item[data-new-option="true"] {
+    animation: highlight 1s ease-out;
 }

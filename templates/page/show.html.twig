@@ -12,7 +12,9 @@
                 On inclut le template partiel.
                 On passe le contenu ('content') et un 'id' pour les ancres de navigation.
             #}
-            {% include 'sections/_' ~ section.type ~ '.html.twig' ignore missing with { 'content': section.content, 'id': section.type } %}
+            {% include 'sections/_' ~ section.type ~ '.html.twig' ignore missing with { 
+                'content': section.content, 
+                'id': section.type            } %}
         {% endfor %}
     </main>
 {% endblock %}

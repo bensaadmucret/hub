@@ -1,14 +1,519 @@
-{# templates/sections/_contact.html.twig #}
 {% if content %}
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8 text-center">
-            <h2 class="display-5">{{ content.title|default('Contactez-nous') }}</h2>
-            {% if content.subtitle %}
-                <p class="lead text-muted">{{ content.subtitle }}</p>
-            {% endif %}
-            {# L'emplacement pour le futur formulaire de contact pourra être ajouté ici #}
+
+<section id="{{ id|default('contact') }}" class="py-20 bg-white">
+    <!-- Notifications -->
+    <div id="notification" class="notification hidden">
+        <div class="notification-content">
+            <div class="notification-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div class="notification-message"></div>
+            <button type="button" class="notification-close" onclick="document.getElementById('notification').classList.add('hidden')">
+                <span class="sr-only">Fermer</span>
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
         </div>
     </div>
+
+    <div class="contact-form-section w-full md:max-w-md mx-auto bg-white p-6 rounded-lg shadow-md relative">
+        <!-- Overlay de chargement -->
+        <div id="form-loading" class="absolute inset-0 bg-white bg-opacity-70 rounded-lg items-center justify-center hidden">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+        </div>
+        
+        <h2 class="text-2xl font-bold mb-4">{{ content.title }}</h2>
+        
+        {% if content.subtitle %}
+            <p class="text-gray-600 mb-6">{{ content.subtitle }}</p>
+        {% endif %}
+        
+        <form id="contact-form" class="space-y-4" novalidate>
+            <input type="hidden" name="_token" value="{{ csrf_token('contact_form') }}">
+            <!-- Champ honeypot pour la protection anti-spam -->
+            <div style="position: absolute; left: -9999px;" aria-hidden="true">
+                <label for="website">Ne remplissez pas ce champ si vous êtes humain</label>
+                <input type="text" 
+                       id="website" 
+                       name="website" 
+                       tabindex="-1" 
+                       autocomplete="off"
+                       style="display: none;"
+                       data-honeypot>
+            </div>
+            <div id="form-errors" class="hidden bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">Des erreurs sont présentes dans le formulaire :</h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            <ul id="error-list" class="list-disc pl-5 space-y-1"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        {% for field in content.fields %}
+            <div class="form-group mb-4">
+                <label for="{{ field.name }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    {{ field.label }}
+                    {% if field.required %}
+                        <span class="text-red-500">*</span>
+                    {% endif %}
+                </label>
+                
+                {% if field.type == 'textarea' %}
+                    <textarea 
+                        id="{{ field.name }}" 
+                        name="{{ field.name }}"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm {% if field.error is defined and field.error %}border-red-500{% endif %}"
+                        placeholder="{{ field.placeholder|default('') }}"
+                        {% if field.required %}required{% endif %}
+                        aria-describedby="{{ field.name }}-error"
+                        {% if field.error is defined and field.error %}aria-invalid="true"{% endif %}
+                    >{{ field.value|default('') }}</textarea>
+                {% elseif field.type == 'select' and field.options is defined %}
+                    <select
+                        id="{{ field.name }}"
+                        name="{{ field.name }}"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm {% if field.error is defined and field.error %}border-red-500{% endif %}"
+                        {% if field.required %}required{% endif %}
+                        aria-describedby="{{ field.name }}-error"
+                        {% if field.error is defined and field.error %}aria-invalid="true"{% endif %}
+                    >
+                        <option value="" disabled {% if field.value is not defined or not field.value %}selected{% endif %}>
+                            {{ field.placeholder|default('Sélectionnez une option') }}
+                        </option>
+                        {% if field.options is defined and field.options is iterable %}
+                            {% for option in field.options %}
+                                {% if option is iterable %}
+                                    <option value="{{ option.value is defined ? option.value : '' }}" {% if field.value is defined and field.value == (option.value is defined ? option.value : option) %}selected{% endif %}>
+                                        {{ option.label is defined ? option.label : option }}
+                                    </option>
+                                {% else %}
+                                    <option value="{{ option }}" {% if field.value is defined and field.value == option %}selected{% endif %}>
+                                        {{ option }}
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                {% else %}
+                    <input 
+                        type="{{ field.type }}" 
+                        id="{{ field.name }}" 
+                        name="{{ field.name }}"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm {% if field.error is defined and field.error %}border-red-500{% endif %}"
+                        placeholder="{{ field.placeholder|default('') }}"
+                        {% if field.required %}required{% endif %}
+                        value="{{ field.value|default('') }}"
+                        aria-describedby="{{ field.name }}-error"
+                        {% if field.error is defined and field.error %}aria-invalid="true"{% endif %}
+                    >
+                {% endif %}
+                {% if field.error is defined and field.error %}
+                    <p id="{{ field.name }}-error" class="mt-2 text-sm text-red-600">{{ field.error }}</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+        
+        <!-- Case à cocher RGPD -->
+        <div class="mt-6 mb-4">
+            <div class="flex items-start">
+                <div class="flex items-center h-5">
+                    <input id="consent" name="consent" type="checkbox" value="1" required
+                           class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                           aria-describedby="consent-error">
+                </div>
+                <div class="ml-3 text-sm">
+                    <label for="consent" class="font-medium text-gray-700">
+                        J'accepte que mes données soient utilisées pour me recontacter dans le cadre de ma demande.
+                    </label>
+                    <p id="consent-error" class="mt-1 text-sm text-red-600 hidden">
+                        Vous devez accepter les conditions pour continuer.
+                    </p>
+                    <p class="text-gray-500">
+                        En soumettant ce formulaire, je consens à ce que les informations saisies soient exploitées dans ce cadre.
+                        Pour en savoir plus sur la gestion de vos données personnelles, consultez notre
+                        <a href="/politique-de-confidentialite" class="text-indigo-600 hover:text-indigo-500">politique de confidentialité</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex items-center">
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-75" id="submit-button">
+                <span class="submit-text">Envoyer</span>
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" id="spinner">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+        </div>
+    </form>
 </div>
+
+
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideInRight {
+        from { transform: translateX(100%); }
+        to { transform: translateX(0); }
+    }
+    
+    @keyframes slideOutRight {
+        from { transform: translateX(0); }
+        to { transform: translateX(100%); }
+    }
+    
+    .notification {
+        position: fixed;
+        top: 1.5rem;
+        right: 1.5rem;
+        z-index: 50;
+        max-width: 28rem;
+        width: 90%;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        animation: slideInRight 0.3s ease-out forwards;
+        transition: all 0.3s ease;
+    }
+    
+    .notification.hidden {
+        animation: slideOutRight 0.3s ease-in forwards;
+    }
+    
+    .notification.success {
+        background-color: #f0fdf4;
+        border-left: 4px solid #22c55e;
+    }
+    
+    .notification.error {
+        background-color: #fef2f2;
+        border-left: 4px solid #ef4444;
+    }
+    
+    .notification-content {
+        padding: 1rem;
+        display: flex;
+        align-items: flex-start;
+    }
+    
+    .notification-icon {
+        flex-shrink: 0;
+        margin-right: 0.75rem;
+        padding-top: 0.25rem;
+    }
+    
+    .notification-icon svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+    
+    .notification.success .notification-icon svg {
+        color: #22c55e;
+    }
+    
+    .notification.error .notification-icon svg {
+        color: #ef4444;
+    }
+    
+    .notification-message {
+        flex: 1;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        color: #1f2937;
+    }
+    
+    .notification-close {
+        margin-left: 0.75rem;
+        color: #9ca3af;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 0.25rem;
+        transition: all 0.2s;
+    }
+    
+    .notification-close:hover {
+        color: #6b7280;
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .notification-close:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-out forwards;
+    }
+    
+    .form-group {
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        border-color: #6366f1;
+    }
+    
+    .error-border {
+        border-color: #ef4444;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('contact-form');
+        const notification = document.getElementById('notification');
+        const notificationMessage = notification.querySelector('.notification-message');
+        const notificationIcon = notification.querySelector('.notification-icon svg');
+        const formErrors = document.getElementById('form-errors');
+        const errorList = document.getElementById('error-list');
+        const submitButton = document.getElementById('submit-button');
+        const spinner = document.getElementById('spinner');
+        const submitText = document.querySelector('.submit-text');
+        const formLoading = document.getElementById('form-loading');
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationMessage = notification.querySelector('.notification-message');
+            const notificationIcon = notification.querySelector('.notification-icon svg');
+            
+            // Mettre à jour le message
+            notificationMessage.textContent = message;
+            
+            // Mettre à jour le style en fonction du type
+            notification.className = 'notification';
+            
+            if (type === 'error') {
+                notification.classList.add('error');
+                notificationIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />';
+            } else {
+                notification.classList.add('success');
+                notificationIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />';
+            }
+            
+            // Afficher la notification
+            notification.classList.remove('hidden');
+            
+            // Masquer automatiquement après 5 secondes
+            clearTimeout(notification.timeoutId);
+            notification.timeoutId = setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 5000);
+        }
+
+        function setLoading(isLoading) {
+            if (isLoading) {
+                submitButton.disabled = true;
+                spinner.classList.remove('hidden');
+                submitText.textContent = 'Envoi en cours...';
+                formLoading.classList.remove('hidden');
+            } else {
+                submitButton.disabled = false;
+                spinner.classList.add('hidden');
+                submitText.textContent = 'Envoyer';
+                formLoading.classList.add('hidden');
+            }
+        }
+
+        function displayFieldErrors(errors) {
+            // Réinitialiser les erreurs
+            document.querySelectorAll('[id$="-error"]').forEach(el => el.remove());
+            document.querySelectorAll('.border-red-500').forEach(el => {
+                el.classList.remove('border-red-500');
+                el.removeAttribute('aria-invalid');
+            });
+            
+            // Afficher les erreurs globales
+            const errorList = document.getElementById('error-list');
+            if (errorList) {
+                errorList.innerHTML = '';
+                
+                if (errors && Object.keys(errors).length > 0) {
+                    Object.entries(errors).forEach(([field, message]) => {
+                        const fieldName = field.replace(/^\d+\.?/, ''); // Gère les champs de type collection
+                        const li = document.createElement('li');
+                        li.textContent = `${fieldName}: ${message}`;
+                        errorList.appendChild(li);
+                        
+                        // Mettre en évidence le champ en erreur
+                        let fieldElement = form.querySelector(`[name$="${fieldName}"]`);
+                        
+                        // Si le champ n'est pas trouvé, essayer avec le nom complet
+                        if (!fieldElement) {
+                            fieldElement = form.querySelector(`[name="${fieldName}"]`);
+                        }
+                        
+                        if (fieldElement) {
+                            const formGroup = fieldElement.closest('.form-group') || fieldElement.parentElement;
+                            fieldElement.classList.add('border-red-500');
+                            fieldElement.setAttribute('aria-invalid', 'true');
+                            
+                            // Ajouter le message d'erreur sous le champ
+                            const errorElement = document.createElement('p');
+                            errorElement.id = `${fieldElement.id || fieldName}-error`;
+                            errorElement.className = 'mt-1 text-sm text-red-600';
+                            errorElement.textContent = typeof message === 'string' ? message : message[0];
+                            formGroup.appendChild(errorElement);
+                            
+                            // Faire défiler jusqu'au premier champ en erreur
+                            if (formGroup && !formErrors.contains(formGroup)) {
+                                formGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }
+                    });
+                    
+                    formErrors.classList.remove('hidden');
+                    formErrors.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    formErrors.classList.add('hidden');
+                }
+                
+                formErrors.classList.remove('hidden');
+                formErrors.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                formErrors.classList.add('hidden');
+            }
+        }
+
+        function validateForm() {
+            let isValid = true;
+            const errors = {};
+            
+            // Vérification des champs requis
+            form.querySelectorAll('[required]').forEach(field => {
+                if ((field.type === 'checkbox' && !field.checked) || 
+                    (field.type !== 'checkbox' && !field.value.trim())) {
+                    isValid = false;
+                    const fieldName = field.name || field.id;
+                    errors[fieldName] = 'Ce champ est obligatoire';
+                    field.classList.add('border-red-500');
+                    field.setAttribute('aria-invalid', 'true');
+                    
+                    // Ajout du message d'erreur s'il n'existe pas déjà
+                    if (!document.getElementById(`${field.id}-error`)) {
+                        const errorElement = document.createElement('p');
+                        errorElement.id = `${field.id}-error`;
+                        errorElement.className = 'mt-1 text-sm text-red-600';
+                        errorElement.textContent = 'Ce champ est obligatoire';
+                        field.parentNode.insertBefore(errorElement, field.nextSibling);
+                    }
+                }
+            });
+            
+            // Validation spécifique pour l'email
+            const emailField = form.querySelector('input[type="email"]');
+            if (emailField && emailField.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailField.value)) {
+                isValid = false;
+                errors[emailField.name || emailField.id] = 'Veuillez entrer une adresse email valide';
+                emailField.classList.add('border-red-500');
+                emailField.setAttribute('aria-invalid', 'true');
+                
+                const errorElement = document.getElementById(`${emailField.id}-error`);
+                if (errorElement) {
+                    errorElement.textContent = 'Veuillez entrer une adresse email valide';
+                }
+            }
+            
+            return { isValid, errors };
+        }
+        
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Validation côté client
+            const { isValid, errors } = validateForm();
+            if (!isValid) {
+                displayFieldErrors(errors);
+                return;
+            }
+            
+            setLoading(true);
+            formErrors.classList.add('hidden');
+            
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch('{{ path('app_contact') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    },
+                    body: new URLSearchParams(formData).toString()
+                });
+                
+                if (response.redirected) {
+                    // Redirection gérée par Symfony, on recharge la page pour afficher les messages flash
+                    setLoading(false);
+                    window.location.href = response.url;
+                    return;
+                }
+                
+                const result = await response.json().catch(() => ({}));
+                
+                if (response.ok) {
+                    showNotification('Votre message a été envoyé avec succès !');
+                    form.reset();
+                    // Faire défiler vers le haut du formulaire
+                    form.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    if (response.status === 400 && result.errors) {
+                        // Gérer les erreurs de validation
+                        displayFieldErrors(result.errors);
+                        
+                        // Faire défiler jusqu'à la première erreur
+                        const firstErrorField = document.querySelector('.border-red-500');
+                        if (firstErrorField) {
+                            firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    } else {
+                        showNotification(
+                            result.message || 'Une erreur est survenue lors de l\'envoi du formulaire.',
+                            'error'
+                        );
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                showNotification('Une erreur réseau est survenue. Veuillez réessayer plus tard.', 'error');
+            } finally {
+                setLoading(false);
+            }
+        });
+        
+        // Validation en temps réel
+        form.querySelectorAll('input, textarea').forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.hasAttribute('aria-invalid')) {
+                    this.classList.remove('border-red-500');
+                    this.removeAttribute('aria-invalid');
+                    const errorElement = document.getElementById(`${this.name}-error`);
+                    if (errorElement) {
+                        errorElement.remove();
+                    }
+                }
+            });
+        });
+    });
+</script>
+</section>
 {% endif %}
