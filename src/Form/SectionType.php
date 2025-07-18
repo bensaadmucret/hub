@@ -15,6 +15,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\FormInterface;
+use App\Form\Section\BannerSectionType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class SectionType extends AbstractType
@@ -27,6 +28,7 @@ class SectionType extends AbstractType
         'Section Avantages' => 'advantages',
         'Section Témoignages' => 'testimonials',
         'Section CTA' => 'cta',
+        'Section Banner' => 'banner',
         'Section Contact' => 'contact',
     ];
 
@@ -70,6 +72,11 @@ class SectionType extends AbstractType
                 case 'cta':
                     $form->add('content', CtaSectionType::class, [
                         'label' => 'Contenu de la section CTA',
+                    ]);
+                    break;
+                case 'banner':
+                    $form->add('content', BannerSectionType::class, [
+                        'label' => 'Contenu de la section Banner',
                     ]);
                     break;
                 case 'contact':

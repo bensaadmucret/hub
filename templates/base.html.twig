@@ -25,10 +25,27 @@
                     </div>
                 </div>
                 <div class="hidden md:ml-6 md:flex md:items-center md:space-x-8">
-                    <a href="#features" class="text-gray-900 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Fonctionnalités</a>
-                    <a href="#advantages" class="text-gray-900 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Avantages</a>
-                    <a href="#testimonials" class="text-gray-900 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Témoignages</a>
-                    <a href="#contact" class="text-gray-900 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Contact</a>
+                    {% set isHomePage = app.request.attributes.get('_route') == 'app_home' %}
+    
+                    <a href="{{ isHomePage ? '#features' : path('app_home') }}" 
+                    class="text-gray-900 hover:text-indigo-600 px-3 py-2 text-sm font-medium">
+                        Fonctionnalités
+                    </a>
+                    
+                    <a href="{{ isHomePage ? '#advantages' : path('app_home') }}" 
+                    class="text-gray-900 hover:text-indigo-600 px-3 py-2 text-sm font-medium">
+                        Avantages
+                    </a>
+                    
+                    <a href="{{ isHomePage ? '#testimonials' : path('app_home') }}" 
+                    class="text-gray-900 hover:text-indigo-600 px-3 py-2 text-sm font-medium">
+                        Témoignages
+                    </a>
+                    
+                    <a href="{{ path('app_contact') }}" 
+                    class="text-gray-900 hover:text-indigo-600 px-3 py-2 text-sm font-medium">
+                        Contact
+                    </a>
                     <button class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition duration-300">
                         Essai Gratuit
                     </button>
@@ -45,10 +62,27 @@
         <!-- Mobile menu -->
         <div class="hidden md:hidden" id="mobile-menu">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <a href="#features" class="text-gray-900 hover:text-indigo-600 block px-3 py-2 text-base font-medium">Fonctionnalités</a>
-                <a href="#advantages" class="text-gray-900 hover:text-indigo-600 block px-3 py-2 text-base font-medium">Avantages</a>
-                <a href="#testimonials" class="text-gray-900 hover:text-indigo-600 block px-3 py-2 text-base font-medium">Témoignages</a>
-                <a href="#contact" class="text-gray-900 hover:text-indigo-600 block px-3 py-2 text-base font-medium">Contact</a>
+                {% set isHomePage = app.request.attributes.get('_route') == 'app_home' %}
+    
+                    <a href="{{ isHomePage ? '#features' : path('app_home') }}" 
+                    class="text-gray-900 hover:text-indigo-600 px-3 py-2 text-sm font-medium">
+                        Fonctionnalités
+                    </a>
+                    
+                    <a href="{{ isHomePage ? '#advantages' : path('app_home') }}" 
+                    class="text-gray-900 hover:text-indigo-600 px-3 py-2 text-sm font-medium">
+                        Avantages
+                    </a>
+                    
+                    <a href="{{ isHomePage ? '#testimonials' : path('app_home') }}" 
+                    class="text-gray-900 hover:text-indigo-600 px-3 py-2 text-sm font-medium">
+                        Témoignages
+                    </a>
+                    
+                    <a href="{{ path('app_contact') }}" 
+                    class="text-gray-900 hover:text-indigo-600 px-3 py-2 text-sm font-medium">
+                        Contact
+                    </a>
                 <button class="bg-indigo-600 text-white w-full px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition duration-300 mt-2">
                     Essai Gratuit
                 </button>
@@ -74,7 +108,7 @@
                         <li><a href="#features" class="text-gray-400 hover:text-white transition">Fonctionnalités</a></li>
                         <li><a href="#advantages" class="text-gray-400 hover:text-white transition">Avantages</a></li>
                         <li><a href="#testimonials" class="text-gray-400 hover:text-white transition">Témoignages</a></li>
-                        <li><a href="#contact" class="text-gray-400 hover:text-white transition">Contact</a></li>
+                        <li><a href="{{ path('app_contact') }}" class="text-gray-400 hover:text-white transition">Contact</a></li>
                     </ul>
                 </div>
                 <div>

@@ -17,15 +17,19 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use App\Repository\PageRepository;
 
 final class ContactController extends AbstractController
 {
+    private const CONTACT_PAGE_SLUG = 'contact';
+
     public function __construct(
         private readonly ContactService $contactService,
         private readonly LoggerInterface $logger,
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
         private readonly ValidatorInterface $validator,
-        private readonly SerializerInterface $serializer
+        private readonly SerializerInterface $serializer,
+        private readonly PageRepository $pageRepository
     ) {
     }
 
@@ -129,7 +133,16 @@ final class ContactController extends AbstractController
             return new JsonResponse(null, Response::HTTP_NO_CONTENT);
 
         }
+
+        $page = $this->pageRepository->findOneBySlug(self::CONTACT_PAGE_SLUG);
+        if (!$page) {
+            throw $this->createNotFoundException('Page de contact non trouvée');
+        }
+  
+
+        return $this->render('page/show.html.twig', [
+            'page' => $page,
+        ]);
         
-        return $this->redirect($this->generateUrl('app_home') . '#contact');
     }
 }

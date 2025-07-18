@@ -97,11 +97,14 @@ lint:
 
 ## Gestion Docker
 docker-build:
-	docker build -t mon-projet .
+	docker compose build
 
 docker-run:
-	docker run -it --rm -p 8000:8000 mon-projet
+	docker compose up -d
 
 docker-stop:
-	docker stop $(docker ps | grep mon-projet | awk '{print $1}')
+	docker compose down
+
+cc:
+	php bin/console cache:clear
 
