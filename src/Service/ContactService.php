@@ -5,20 +5,15 @@ namespace App\Service;
 use App\Dto\ContactDto;
 use App\Entity\Contact;
 use App\Repository\ContactRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 final class ContactService
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
         private readonly ContactRepository $contactRepository,
-        private readonly EventDispatcherInterface $eventDispatcher,
         private readonly LoggerInterface $logger,
-        private readonly RequestStack $requestStack // [+] Injection de RequestStack
-
+        private readonly RequestStack $requestStack
     ) {
     }
 
@@ -39,10 +34,17 @@ final class ContactService
          * $this->eventDispatcher->dispatch($event);
          */
         
-        $this->logger->info('New contact form submission', [
+        $context = [
             'id' => $contact->getId(),
-            'subject' => $contact->getSubject(),
-            'user_agent' => $this->requestStack->getCurrentRequest()->headers->get('User-Agent')
-        ]);
+            'subject' => $contact->getSubject()
+        ];
+
+        // Ajout du user-agent si la requête est disponible
+        $request = $this->requestStack->getCurrentRequest();
+        if ($request !== null) {
+            $context['user_agent'] = $request->headers->get('User-Agent');
+        }
+
+        $this->logger->info('New contact form submission', $context);
     }
 }

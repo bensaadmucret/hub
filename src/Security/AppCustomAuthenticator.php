@@ -52,11 +52,12 @@ class AppCustomAuthenticator extends AbstractLoginFormAuthenticator
 
         $user = $token->getUser();
         
-        // Redirection en fonction du rôle
-        if (in_array('ROLE_ADMIN', $user->getRoles(), true)) {
+        // Vérification de l'utilisateur et de ses rôles
+        if ($user !== null && in_array('ROLE_ADMIN', $user->getRoles(), true)) {
             return new RedirectResponse($this->urlGenerator->generate('admin'));
         }
         
+        // Par défaut, rediriger vers la page d'accueil
         return new RedirectResponse($this->urlGenerator->generate('app_accueil'));
     }
 
