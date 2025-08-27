@@ -16,3 +16,20 @@ services:
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
 ###< symfony/mailer ###
+
+  traefik:
+    image: traefik:v3.0
+    command:
+      - --api.dashboard=true
+      - --entrypoints.web.address=:80
+      - --providers.file.filename=/etc/traefik/traefik_dynamic.yml
+    ports:
+      - "80:80"
+      - "8081:8080"
+    volumes:
+      - type: bind
+        source: ./traefik_dynamic.yml
+        target: /etc/traefik/traefik_dynamic.yml
+        read_only: true
+    networks:
+      - symfony

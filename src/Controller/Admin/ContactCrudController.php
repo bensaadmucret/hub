@@ -3,7 +3,6 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Contact;
-
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
@@ -21,15 +20,17 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use App\Repository\ContactRepository;
+
+/**
+ * @extends \EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController<Contact>
+ */
 
 #[Route('/admin/contact')]
 #[IsGranted('ROLE_ADMIN')]
 class ContactCrudController extends AbstractCrudController
 {
     public function __construct(
-        private AdminUrlGenerator $adminUrlGenerator,
-        private ContactRepository $contactRepository
+        private AdminUrlGenerator $adminUrlGenerator
     ) {
     }
     public static function getEntityFqcn(): string
@@ -44,7 +45,6 @@ class ContactCrudController extends AbstractCrudController
             ->setEntityLabelInPlural('Contacts')
             ->setPageTitle('index', 'Gestion des contacts')
             ->setPageTitle('detail', fn (Contact $contact) => sprintf('Détail du contact #%s', $contact->getId()))
-            ->setDefaultSort(['submittedAt' => 'DESC'])
             ->setSearchFields(['name', 'email', 'subject', 'message'])
             ->setEntityPermission('ROLE_ADMIN')
             ->showEntityActionsInlined()
@@ -69,7 +69,7 @@ class ContactCrudController extends AbstractCrudController
                         ->setAction('detail')
                         ->setEntityId($entity->getId())
                         ->generateUrl();
-                    
+
                     return sprintf('<a href="%s">%s</a>', $url, $value);
                 }),
             EmailField::new('email', 'Email'),
@@ -99,22 +99,19 @@ class ContactCrudController extends AbstractCrudController
                     'attr' => [
                         'data-filter-ignore-case' => 'true'
                     ]
-                ])
-            )
+                ]))
             ->add(TextFilter::new('email', 'Email')
                 ->setFormTypeOption('value_type_options', [
                     'attr' => [
                         'data-filter-ignore-case' => 'true'
                     ]
-                ])
-            )
+                ]))
             ->add(TextFilter::new('subject', 'Sujet')
                 ->setFormTypeOption('value_type_options', [
                     'attr' => [
                         'data-filter-ignore-case' => 'true'
                     ]
-                ])
-            )
+                ]))
             ->add(DateTimeFilter::new('submittedAt', 'Date de soumission'))
             ->add(BooleanFilter::new('consent', 'A donné son consentement'));
     }

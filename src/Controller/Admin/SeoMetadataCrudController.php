@@ -9,6 +9,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextEditorField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
+/**
+ * @extends AbstractCrudController<SeoMetadata>
+ */
 class SeoMetadataCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string

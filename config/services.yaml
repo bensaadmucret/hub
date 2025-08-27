@@ -15,6 +15,7 @@ parameters:
     app_env: '%kernel.environment%'
     app_secret: '%kernel.secret%'
     app_default_from_email: '%env(MAILER_FROM)%'
+    app_admin_email: '%env(ADMIN_EMAIL)%'
     
     # Configuration JWT
     jwt_secret_key: '%env(JWT_SECRET_KEY)%'
@@ -40,10 +41,20 @@ services:
             - '../src/Tests/'
 
     # Configuration des services personnalisés
+    App\Integration\Payload\PayloadClient:
+        arguments:
+            $baseUrl: '%payload_api_url%'
+            $apiKey: '%payload_api_key%'
+
+    # Compat: ancienne implémentation utilisée ailleurs dans le code
     App\Core\Service\PayloadClient:
         arguments:
             $payloadApiUrl: '%payload_api_url%'
             $payloadApiKey: '%payload_api_key%'
+            $client: '@http_client'
+
+    # Bind interface to implementation for DI and testing
+    App\Integration\Payload\PayloadClientInterface: '@App\Integration\Payload\PayloadClient'
 
     # Configuration des services d'authentification
     App\Core\Service\EmailVerificationService:
@@ -55,8 +66,8 @@ services:
             $defaultFromEmail: '%app_default_from_email%'
     
     # Configuration pour JWT
-    Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface:
-        class: Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManager
+    # Alias vers le service du bundle pour l'autowiring correct
+    Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface: '@lexik_jwt_authentication.jwt_manager'
     
     # Paramètres JWT (déplacés dans la section parameters)
     
@@ -106,5 +117,13 @@ services:
 
     # Configuration du gestionnaire d'événements pour le workflow
     App\Onboarding\EventSubscriber\WorkflowSubscriber:
+        tags:
+            - { name: 'kernel.event_subscriber' }
+
+    # Notifications de formulaire de contact
+    App\EventSubscriber\ContactNotificationSubscriber:
+        arguments:
+            $adminEmail: '%app_admin_email%'
+            $mailerFrom: '%app_default_from_email%'
         tags:
             - { name: 'kernel.event_subscriber' }

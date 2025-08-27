@@ -1,0 +1,12 @@
+http:
+  routers:
+    medcoach:
+      rule: Host(`medcoach.localhost`)
+      entryPoints:
+        - web
+      service: medcoach-svc
+  services:
+    medcoach-svc:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8000"

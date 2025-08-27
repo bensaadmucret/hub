@@ -12,11 +12,15 @@ class Section
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    // @phpstan-ignore-next-line property.unusedType Doctrine assigns the ID at runtime
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $type = null;
 
+    /**
+     * @var array<string, mixed>
+     */
     #[ORM\Column]
     private array $content = [];
 
@@ -49,11 +53,17 @@ class Section
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getContent(): array
     {
         return $this->content;
     }
 
+    /**
+     * @param array<string, mixed> $content
+     */
     public function setContent(array $content): static
     {
         $this->content = $content;

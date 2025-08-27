@@ -5,15 +5,18 @@ namespace App\Service;
 use App\Dto\ContactDto;
 use App\Entity\Contact;
 use App\Repository\ContactRepository;
+use App\Event\ContactSubmittedEvent;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 final class ContactService
 {
     public function __construct(
         private readonly ContactRepository $contactRepository,
         private readonly LoggerInterface $logger,
-        private readonly RequestStack $requestStack
+        private readonly RequestStack $requestStack,
+        private readonly EventDispatcherInterface $eventDispatcher
     ) {
     }
 
@@ -29,11 +32,10 @@ final class ContactService
 
         $this->contactRepository->save($contact, true);
 
-        /** TODO : Dispatch d'événement pour les notifications
-         * $event = new ContactSubmittedEvent($contact);
-         * $this->eventDispatcher->dispatch($event);
-         */
-        
+        // Dispatch de l'événement pour les notifications synchrones
+        $event = new ContactSubmittedEvent($contact);
+        $this->eventDispatcher->dispatch($event, ContactSubmittedEvent::NAME);
+
         $context = [
             'id' => $contact->getId(),
             'subject' => $contact->getSubject()

@@ -1,0 +1,223 @@
+{#
+  Page de souscription utilisant Tailwind (déjà configuré dans le projet).
+  - Pas de CDN CSS: on s'appuie sur base.html.twig qui inclut build/app.css.
+  - Charge uniquement le script Paddle Billing v2 (requis pour le checkout côté client).
+#}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Souscription{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  {# S'assure que la CSS compilée est chargée si le layout ne le fait pas déjà #}
+  <link rel="stylesheet" href="{{ asset('build/app.css') }}">
+{% endblock %}
+
+{% block body %}
+  <main class="min-h-[60vh] bg-gray-50 py-12">
+    <div class="container mx-auto px-4">
+      <section class="mx-auto w-full max-w-xl rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div class="mb-6">
+          <h1 class="text-3xl font-semibold tracking-tight text-gray-900">Souscription</h1>
+          <p class="mt-2 text-sm text-gray-600">Accédez à l'abonnement en un clic via Paddle (sandbox en dev).</p>
+        </div>
+
+        {% if paddle_price_id is empty %}
+          <div class="mb-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900">
+            <p class="text-sm font-medium">PADDLE_PRICE_ID est manquant. Veuillez le définir dans votre .env.local.</p>
+          </div>
+        {% endif %}
+
+        {% if app_env == 'dev' and paddle_client_token is empty %}
+          <div class="mb-4 flex items-start justify-between gap-3 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800" id="client-token-alert">
+            <p class="text-sm">Paddle Client Token non fourni. Selon la configuration, le checkout peut fonctionner sans. Sinon, fournissez un token côté serveur.</p>
+            <button type="button" aria-label="Fermer" class="ml-2 inline-flex h-6 w-6 items-center justify-center rounded hover:bg-blue-100" onclick="const a=document.getElementById('client-token-alert'); if(a) a.remove();">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        {% endif %}
+
+        <div class="flex items-center gap-3">
+          <button
+            id="subscribeBtn"
+            type="button"
+            class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50">
+            <svg id="spinner" class="hidden -ml-1 mr-2 h-4 w-4 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            <span>S’abonner</span>
+          </button>
+          <p id="statusMsg" class="text-sm text-gray-600"></p>
+        </div>
+      </section>
+    </div>
+  </main>
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+  <script src="https://cdn.paddle.com/paddle/v2/paddle.js" crossorigin="anonymous" data-turbo-eval="true" data-turbo-track="reload"></script>
+
+  <script>
+    function initPaddleCheckout() {
+      const env = '{{ app_env|e('js') }}' || 'prod';
+      const priceId = '{{ paddle_price_id|e('js') }}';
+      const clientToken = '{{ paddle_client_token|default('')|e('js') }}';
+      const customerEmail = '{{ customer_email|default('')|e('js') }}';
+
+      const btn = document.getElementById('subscribeBtn');
+      const spinner = document.getElementById('spinner');
+      const statusMsg = document.getElementById('statusMsg');
+
+      function setLoading(loading) {
+        if (!btn) return;
+        btn.disabled = !!loading;
+        if (spinner) spinner.classList.toggle('hidden', !loading);
+      }
+
+      function setStatus(message, type = 'info') {
+        if (!statusMsg) return;
+        statusMsg.textContent = message || '';
+        statusMsg.className = 'text-sm ' + (type === 'error' ? 'text-red-600' : 'text-gray-600');
+      }
+
+      function loadScriptOnce(src, id) {
+        if (document.getElementById(id)) return;
+        const s = document.createElement('script');
+        s.id = id;
+        s.src = src;
+        s.async = true;
+        s.defer = true;
+        s.setAttribute('data-turbo-eval', 'true');
+        s.setAttribute('data-turbo-track', 'reload');
+        document.head.appendChild(s);
+      }
+
+      async function ensurePaddleReady() {
+        // Attendre que le SDK (CDN) soit prêt
+        let tries = 0;
+        // Attendre jusqu'à ~5s pour le local (50 x 100ms)
+        while (!window.Paddle && tries < 50) {
+          await new Promise(r => setTimeout(r, 100));
+          tries++;
+        }
+        // Fallback CDN si toujours absent
+        if (!window.Paddle) {
+          setStatus('SDK local indisponible, chargement du CDN Paddle…', 'info');
+          loadScriptOnce('https://cdn.paddle.com/paddle/v2/paddle.js', 'paddle-sdk-cdn');
+          let cdnTries = 0;
+          while (!window.Paddle && cdnTries < 50) {
+            await new Promise(r => setTimeout(r, 100));
+            cdnTries++;
+          }
+        }
+        if (!window.Paddle) throw new Error('Paddle SDK non chargé (local et CDN).');
+
+        // Traces de présence SDK
+        try {
+          console.info('[Paddle] SDK chargé:', typeof window.Paddle, 'Checkout.open:', typeof window.Paddle?.Checkout?.open);
+        } catch (_) {}
+
+        // Initialisation stricte selon la doc
+        if (typeof window.Paddle?.Initialize === 'function') {
+          if (env === 'dev') {
+            if (!clientToken) {
+              const msg = 'Client token requis en sandbox (Paddle.Initialize). Définissez PADDLE_CLIENT_TOKEN dans .env.local';
+              setStatus(msg, 'error');
+              try { console.error('[Paddle] Initialize error:', msg); } catch (_) {}
+              throw new Error(msg);
+            }
+            try {
+              console.info('[Paddle] Initializing (sandbox) ...');
+              window.Paddle.Initialize({ environment: 'sandbox', token: clientToken });
+              console.info('[Paddle] Initialized (sandbox).');
+            } catch (e) {
+              const d = (e && (e.error?.message || e.message)) || String(e);
+              try { console.error('[Paddle] Initialize failed (sandbox):', d, e); } catch (_) {}
+              throw e;
+            }
+          } else {
+            try {
+              console.info('[Paddle] Initializing (production) ...');
+              window.Paddle.Initialize({ environment: 'production' });
+              console.info('[Paddle] Initialized (production).');
+            } catch (e) {
+              const d = (e && (e.error?.message || e.message)) || String(e);
+              try { console.error('[Paddle] Initialize failed (production):', d, e); } catch (_) {}
+              throw e;
+            }
+          }
+        }
+      }
+
+      // Guard: invalid ID cases (missing or productId instead of priceId)
+      const invalidId = !priceId || priceId.startsWith('pro_');
+      if (btn) btn.disabled = invalidId;
+      if (invalidId) {
+        setStatus(!priceId
+          ? 'Configuration manquante: priceId (pri_...)'
+          : 'ID invalide: un productId (pro_...) a été fourni. Renseignez un priceId (pri_...)', 'error');
+      }
+
+      async function openCheckout() {
+        setStatus('Clic détecté, vérification du SDK...', 'info');
+        if (invalidId) {
+          // Message déjà affiché via guard; on ne poursuit pas
+          try { console.warn('[Paddle] Invalid priceId. Expected pri_...'); } catch (_) {}
+          return;
+        }
+        try {
+          setLoading(true);
+          try { console.groupCollapsed('[Paddle] Checkout'); } catch (_) {}
+          try {
+            console.debug('[Paddle] Env:', env);
+            console.debug('[Paddle] SDK presence:', typeof window.Paddle, typeof window.Paddle?.Checkout?.open);
+          } catch (_) {}
+
+          setStatus('Chargement du SDK Paddle...', 'info');
+          await ensurePaddleReady();
+          setStatus('SDK prêt, ouverture du checkout...', 'info');
+
+          const items = [{ priceId: priceId, quantity: 1 }];
+          const customer = customerEmail ? { email: customerEmail } : undefined;
+
+          const options = {
+            items,
+            customer,
+            successUrl: '/',
+            closeCallback: () => { setLoading(false); },
+          };
+
+          try { console.debug('[Paddle] Checkout.open options:', { items, customer: customer ? { email: customer.email } : undefined, successUrl: options.successUrl }); } catch (_) {}
+
+          if (window.Paddle && window.Paddle.Checkout && typeof window.Paddle.Checkout.open === 'function') {
+            window.Paddle.Checkout.open(options);
+            setStatus('Checkout ouvert avec succès', 'info');
+            try { console.info('[Paddle] Checkout opened.'); } catch (_) {}
+          } else {
+            throw new Error(`API Checkout indisponible. SDK: ${typeof window.Paddle}, Checkout: ${typeof window.Paddle?.Checkout}, open: ${typeof window.Paddle?.Checkout?.open}`);
+          }
+        } catch (err) {
+          const details = (err && (err.error?.message || err.message)) || String(err);
+          try { console.error('[Paddle] Error:', details, err?.stack || err); } catch (_) {}
+          setStatus(`Erreur Paddle: ${details}`, 'error');
+          setLoading(false);
+        } finally {
+          try { console.groupEnd(); } catch (_) {}
+        }
+      }
+
+      if (btn) {
+        // Garder le handler actif pour permettre plusieurs essais si SDK pas prêt
+        btn.addEventListener('click', openCheckout);
+      }
+    }
+
+    // Support Turbo & navigation moderne
+    document.addEventListener('turbo:load', initPaddleCheckout);
+    document.addEventListener('DOMContentLoaded', initPaddleCheckout);
+    window.addEventListener('load', initPaddleCheckout);
+  </script>
+{% endblock %}

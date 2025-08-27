@@ -17,6 +17,7 @@ class TestimonialEntryType extends AbstractType
         $builder
             ->add('image_url', UrlType::class, [
                 'label' => 'URL de la photo',
+                'default_protocol' => 'https',
             ])
             ->add('name', TextType::class, [
                 'label' => 'Nom de la personne',

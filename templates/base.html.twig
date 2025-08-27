@@ -11,6 +11,20 @@
     {{ encore_entry_link_tags('app') }}    
     {% endblock %}    
  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {% block javascripts %}
+      {{ encore_entry_script_tags('app', null, { defer: true }) }}
+      <script>
+          document.addEventListener('turbo:load', () => {
+              // Mobile menu toggle (exécuté à chaque navigation Turbo)
+              const mobileMenuButton = document.getElementById('mobile-menu-button');
+              const mobileMenu = document.getElementById('mobile-menu');
+              mobileMenuButton?.addEventListener('click', () => {
+                  mobileMenu?.classList.toggle('hidden');
+              });
+          });
+      </script>
+    {% endblock %}
 
 </head>
 <body class="bg-gray-50">
@@ -130,19 +144,9 @@
                 </div>
             </div>
             <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-                <p>© 2023 MedCoach. Tous droits réservés.</p>
+                <p> 2023 MedCoach. Tous droits réservés.</p>
             </div>
         </div>
     </footer>
-    
-    <script>
-        // Mobile menu toggle
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-        
-        mobileMenuButton.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
-    </script>
-</body>
-</html>
+  </body>
+  </html>

@@ -103,6 +103,56 @@ Pour exécuter les tests :
 php bin/phpunit
 ```
 
+### Tests (SQLite + SchemaTool)
+
+Pour des tests rapides et indépendants de l'infrastructure, la suite est configurée pour utiliser SQLite en environnement de test et initialiser le schéma Doctrine au besoin.
+
+**Variables à définir dans `.env.test`**
+
+```
+DATABASE_URL="sqlite:///%kernel.project_dir%/var/test.db"
+PADDLE_WEBHOOK_SECRET="test_secret"
+PAYLOAD_API_URL="http://localhost"
+PAYLOAD_API_KEY="test_key"
+MESSENGER_TRANSPORT_DSN="in-memory://"
+# Optionnel (CI) pour ignorer les dépréciations issues des vendors
+# SYMFONY_DEPRECATIONS_HELPER="weak_vendors"
+```
+
+**Pourquoi SQLite ?**
+
+- Tests hermétiques sans dépendre de Docker/Postgres.
+- Exécution plus rapide en locale et CI.
+
+**Initialisation du schéma Doctrine**
+
+- Le test fonctionnel `tests/Controller/Webhook/PaddleWebhookControllerTest.php` crée le schéma à la volée pour l'entité `App\Entity\PaddleWebhookEvent` via `Doctrine\ORM\Tools\SchemaTool`.
+- Cela garantit l'idempotence et l'absence de dépendance aux migrations pour ce test.
+
+**Mock des dépendances externes**
+
+- `App\Integration\Payload\PayloadClientInterface` est mocké dans les tests pour éviter tout appel HTTP externe.
+
+**Lancement des tests**
+
+```
+make test
+```
+
+Couverture de code :
+
+```
+make test-coverage
+```
+
+Exécuter uniquement le test webhook Paddle :
+
+```
+./vendor/bin/phpunit --filter PaddleWebhookControllerTest
+```
+
+Note: Le contrôleur `App\Controller\Webhook\PaddleWebhookController` renvoie `204 No Content` pour ACK rapide lorsque la signature est valide, même si le JSON est invalide.
+
 ## Licence
 
 Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.

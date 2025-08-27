@@ -11,7 +11,8 @@ class HomeController extends AbstractController
 {
     public function __construct(
         private HomePageService $homePageService
-    ) {}
+    ) {
+    }
 
     #[Route('/', name: 'home')]
     public function index(): Response

@@ -14,6 +14,7 @@ class Page
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    // @phpstan-ignore-next-line property.unusedType Doctrine assigns the ID at runtime
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -28,6 +29,7 @@ class Page
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $metaDescription = null;
 
+    /** @var Collection<int, Section> */
     #[ORM\OneToMany(mappedBy: 'page', targetEntity: Section::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['position' => 'ASC'])]
     private Collection $sections;

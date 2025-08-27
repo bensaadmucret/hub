@@ -13,6 +13,7 @@ class Contact
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    /** @phpstan-ignore-next-line property.unusedType Doctrine assigns the ID at runtime */
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]

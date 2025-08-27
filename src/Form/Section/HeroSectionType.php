@@ -26,6 +26,7 @@ class HeroSectionType extends AbstractType
             ])
             ->add('button_link', UrlType::class, [
                 'label' => 'Lien du bouton',
+                'default_protocol' => 'https',
                 'required' => false,
             ]);
     }

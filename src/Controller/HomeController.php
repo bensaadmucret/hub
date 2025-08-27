@@ -22,7 +22,7 @@ class HomeController extends AbstractController
         if (!$page) {
             throw $this->createNotFoundException('Page d\'accueil non trouvée');
         }
-  
+
 
         return $this->render('page/show.html.twig', [
             'page' => $page,

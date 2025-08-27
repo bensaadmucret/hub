@@ -11,6 +11,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\SlugField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
+/**
+ * @extends AbstractCrudController<Page>
+ */
 class PageCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string
@@ -26,7 +29,7 @@ class PageCrudController extends AbstractCrudController
             SlugField::new('slug', 'URL')->setTargetFieldName('title'),
             TextField::new('metaTitle', 'Titre SEO'),
             TextareaField::new('metaDescription', 'Description SEO'),
-            
+
             // C'est ici que la magie opère
             CollectionField::new('sections', 'Sections de la page')
                 ->setEntryType(SectionType::class) // On dit à EasyAdmin d'utiliser notre formulaire parent

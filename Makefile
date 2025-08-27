@@ -108,3 +108,5 @@ docker-stop:
 cc:
 	php bin/console cache:clear
 
+serve:
+	symfony server:start -d

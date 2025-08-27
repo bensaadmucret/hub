@@ -66,8 +66,11 @@ class ContactFormFieldType extends AbstractType
         $addConditionalFields = function (FormEvent $event) {
             $form = $event->getForm();
             $data = $event->getData();
-            $isSelectType = $data && isset($data['type']) && $data['type'] === 'select';
-            $isCheckboxType = $data && isset($data['type']) && $data['type'] === 'checkbox';
+            if (!is_array($data)) {
+                return;
+            }
+            $isSelectType = isset($data['type']) && $data['type'] === 'select';
+            $isCheckboxType = isset($data['type']) && $data['type'] === 'checkbox';
 
             // Gestion des options pour le type select
             if ($isSelectType) {

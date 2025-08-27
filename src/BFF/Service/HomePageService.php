@@ -13,7 +13,7 @@ class HomePageService
      *     }
      * >
      */
-    public function getFeatures(): array 
+    public function getFeatures(): array
     {
         // Logique pour récupérer les fonctionnalités
         return [];
@@ -27,7 +27,7 @@ class HomePageService
      *     buttonUrl: string
      * }
      */
-    public function getCta(): array 
+    public function getCta(): array
     {
         // Logique pour récupérer le CTA
         return [

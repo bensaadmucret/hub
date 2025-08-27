@@ -45,11 +45,12 @@ class PayloadClient
             'Accept' => 'application/json',
         ];
 
-        // Utiliser le JWT s'il est fourni, sinon utiliser l'API Key
+        // Utiliser le JWT s'il est fourni, sinon utiliser l'API Key en entête dédié
         if ($jwt) {
             $headers['Authorization'] = $jwt;
         } else {
-            $headers['Authorization'] = "users-API-Key {$this->apiKey}";
+            // Alignement avec l'intégration S2S Payload: clé transmise via x-payload-api-key
+            $headers['x-payload-api-key'] = $this->apiKey;
         }
 
         $options = (new HttpOptions())

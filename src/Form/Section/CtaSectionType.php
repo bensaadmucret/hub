@@ -26,6 +26,7 @@ class CtaSectionType extends AbstractType
             ])
             ->add('button_link', UrlType::class, [
                 'label' => 'Lien du bouton principal',
+                'default_protocol' => 'https',
             ])
             ->add('secondary_button_text', TextType::class, [
                 'label' => 'Texte du bouton secondaire',
@@ -33,6 +34,7 @@ class CtaSectionType extends AbstractType
             ])
             ->add('secondary_button_link', UrlType::class, [
                 'label' => 'Lien du bouton secondaire',
+                'default_protocol' => 'https',
                 'required' => false,
             ]);
     }

@@ -93,7 +93,12 @@ class SectionType extends AbstractType
             FormEvents::PRE_SET_DATA,
             function (FormEvent $event) use ($formModifier) {
                 $section = $event->getData();
-                $formModifier($event->getForm(), $section?->getType());
+                $type = null;
+                if ($section instanceof Section) {
+                    $candidate = $section->getType();
+                    $type = is_string($candidate) ? $candidate : null;
+                }
+                $formModifier($event->getForm(), $type);
             }
         );
 
@@ -102,7 +107,12 @@ class SectionType extends AbstractType
             FormEvents::PRE_SUBMIT,
             function (FormEvent $event) use ($formModifier) {
                 $data = $event->getData();
-                $formModifier($event->getForm(), $data['type'] ?? null);
+                $type = null;
+                if (is_array($data)) {
+                    $candidate = $data['type'] ?? null;
+                    $type = is_string($candidate) ? $candidate : null;
+                }
+                $formModifier($event->getForm(), $type);
             }
         );
     }
