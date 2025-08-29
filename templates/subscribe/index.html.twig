@@ -20,7 +20,7 @@
       <section class="mx-auto w-full max-w-xl rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
         <div class="mb-6">
           <h1 class="text-3xl font-semibold tracking-tight text-gray-900">Souscription</h1>
-          <p class="mt-2 text-sm text-gray-600">Accédez à l'abonnement en un clic via Paddle (sandbox en dev).</p>
+          <p class="mt-2 text-sm text-gray-600">Accédez à l'abonnement via Paddle (création de session côté serveur).</p>
         </div>
 
         {% if paddle_price_id is empty %}
@@ -29,28 +29,30 @@
           </div>
         {% endif %}
 
-        {% if app_env == 'dev' and paddle_client_token is empty %}
-          <div class="mb-4 flex items-start justify-between gap-3 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800" id="client-token-alert">
-            <p class="text-sm">Paddle Client Token non fourni. Selon la configuration, le checkout peut fonctionner sans. Sinon, fournissez un token côté serveur.</p>
-            <button type="button" aria-label="Fermer" class="ml-2 inline-flex h-6 w-6 items-center justify-center rounded hover:bg-blue-100" onclick="const a=document.getElementById('client-token-alert'); if(a) a.remove();">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
+        {% for message in app.flashes('error') %}
+          <div class="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-red-900">
+            <p class="text-sm font-medium">{{ message }}</p>
           </div>
-        {% endif %}
-
-        <div class="flex items-center gap-3">
+        {% endfor %}
+        
+        <form id="subscribeForm" method="post" action="{{ path('subscribe_create') }}" class="flex items-center gap-3" data-turbo="false">
+          <input type="hidden" name="_token" value="{{ csrf_token('subscribe_create') }}">
           <button
+            {% if paddle_js_enabled %}type="button"{% else %}type="submit"{% endif %}
             id="subscribeBtn"
-            type="button"
-            class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50">
-            <svg id="spinner" class="hidden -ml-1 mr-2 h-4 w-4 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-            </svg>
+            class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+            {% if paddle_price_id is empty %}disabled{% endif %}
+          >
             <span>S’abonner</span>
           </button>
-          <p id="statusMsg" class="text-sm text-gray-600"></p>
-        </div>
+          <p class="text-sm text-gray-600">
+            {% if paddle_price_id is empty %}
+              Configurez le priceId (pri_...) pour activer le bouton.
+            {% else %}
+              Vous serez redirigé vers la page de paiement sécurisée.
+            {% endif %}
+          </p>
+        </form>
       </section>
     </div>
   </main>
@@ -58,6 +60,7 @@
 
 {% block javascripts %}
   {{ parent() }}
+  {% if paddle_js_enabled %}
   <script src="https://cdn.paddle.com/paddle/v2/paddle.js" crossorigin="anonymous" data-turbo-eval="true" data-turbo-track="reload"></script>
 
   <script>
@@ -203,6 +206,15 @@
           const details = (err && (err.error?.message || err.message)) || String(err);
           try { console.error('[Paddle] Error:', details, err?.stack || err); } catch (_) {}
           setStatus(`Erreur Paddle: ${details}`, 'error');
+          // Fallback: si le SDK échoue, bascule sur le flux server-side
+          try {
+            const form = document.getElementById('subscribeForm');
+            if (form) {
+              console.info('[Paddle] Fallback: submitting server-side form');
+              form.submit();
+              return;
+            }
+          } catch (_) {}
           setLoading(false);
         } finally {
           try { console.groupEnd(); } catch (_) {}
@@ -215,9 +227,93 @@
       }
     }
 
-    // Support Turbo & navigation moderne
-    document.addEventListener('turbo:load', initPaddleCheckout);
-    document.addEventListener('DOMContentLoaded', initPaddleCheckout);
-    window.addEventListener('load', initPaddleCheckout);
+    // Attendre que le DOM soit prêt et attacher l'event listener
+    function attachEventListener() {
+      console.log('[Paddle] Looking for button with ID: subscribeBtn');
+      const button = document.getElementById('subscribeBtn');
+      console.log('[Paddle] Button found:', button);
+      if (button) {
+        button.addEventListener('click', async function() {
+          const env = '{{ app_env|e('js') }}' || 'prod';
+          const priceId = '{{ paddle_price_id|e('js') }}';
+          const clientToken = '{{ paddle_client_token|default('')|e('js') }}';
+          const customerEmail = '{{ customer_email|default('')|e('js') }}';
+
+          // Guard: invalid ID cases
+          const invalidId = !priceId || priceId.startsWith('pro_');
+          if (invalidId) {
+            console.warn('[Paddle] Invalid priceId. Expected pri_...');
+            return;
+          }
+
+        try {
+          console.log('[Paddle] Button clicked, initializing...');
+          
+          // Attendre le SDK
+          let tries = 0;
+          while (!window.Paddle && tries < 50) {
+            await new Promise(r => setTimeout(r, 100));
+            tries++;
+          }
+          
+          if (!window.Paddle) {
+            console.error('[Paddle] SDK not loaded, falling back to server-side');
+            document.getElementById('subscribeForm').submit();
+            return;
+          }
+
+          // Initialiser Paddle
+          if (typeof window.Paddle?.Initialize === 'function') {
+            if (env === 'dev') {
+              if (!clientToken) {
+                console.error('[Paddle] Client token required in sandbox');
+                document.getElementById('subscribeForm').submit();
+                return;
+              }
+              window.Paddle.Initialize({ token: clientToken, pwCustomer: true });
+            } else {
+              window.Paddle.Initialize({ pwCustomer: true });
+            }
+          }
+
+          // Ouvrir le checkout Paddle
+          window.Paddle.Checkout.open({
+            items: [{ priceId: priceId, quantity: 1 }],
+            customer: customerEmail ? { email: customerEmail } : undefined,
+            settings: {
+              displayMode: 'overlay',
+              theme: 'light',
+              locale: 'fr',
+              successUrl: '{{ url('subscribe_success') }}',
+              closeUrl: '{{ url('subscribe_cancel') }}'
+            }
+          });
+          console.log('[Paddle] Checkout opened');
+        } catch (err) {
+          console.error('[Paddle] Error:', err);
+          document.getElementById('subscribeForm').submit();
+        }
+      });
+      console.log('[Paddle] Event listener attached to button');
+      return true;
+    } else {
+      console.error('[Paddle] Button not found');
+      return false;
+    }
+    }
+
+    // Essayer d'attacher l'event listener plusieurs fois si nécessaire
+    let attached = attachEventListener();
+    if (!attached) {
+      // Réessayer après un délai court
+      setTimeout(() => {
+        attached = attachEventListener();
+        if (!attached) {
+          // Dernier essai avec DOMContentLoaded
+          document.addEventListener('DOMContentLoaded', attachEventListener);
+        }
+      }, 100);
+    }
   </script>
+  {% endif %}
 {% endblock %}

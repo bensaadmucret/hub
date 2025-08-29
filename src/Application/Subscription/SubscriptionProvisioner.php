@@ -43,4 +43,3 @@ final class SubscriptionProvisioner
         return $this->payload->listSubscriptions($page, $limit);
     }
 }
-

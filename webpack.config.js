@@ -79,6 +79,10 @@ Encore
 
 const path = require('path');
 const config = Encore.getWebpackConfig();
+// Set devtool explicitly in development for Firefox compatibility
+if (process.env.NODE_ENV !== 'production') {
+    config.devtool = 'source-map';
+}
 config.resolve = config.resolve || {};
 config.resolve.alias = config.resolve.alias || {};
 config.resolve.alias['@symfony/stimulus-bridge/controllers.json'] = path.resolve(__dirname, 'assets/controllers.json');

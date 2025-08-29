@@ -21,18 +21,22 @@ final class PaddleSignatureVerifierTest extends TestCase
     {
         $verifier = $this->makeVerifier();
         $raw = json_encode(['hello' => 'world'], JSON_THROW_ON_ERROR);
-        $sig = base64_encode(hash_hmac('sha256', $raw, self::SECRET, true));
+        $ts = time();
+        $h1 = hash_hmac('sha256', $ts . ':' . $raw, self::SECRET);
+        $header = sprintf('ts=%d;h1=%s', $ts, $h1);
 
-        self::assertTrue($verifier->isValid($sig, $raw));
+        self::assertTrue($verifier->isValid($header, $raw));
     }
 
     public function testInvalidSignature(): void
     {
         $verifier = $this->makeVerifier();
         $raw = json_encode(['x' => 1], JSON_THROW_ON_ERROR);
-        $sig = base64_encode(hash_hmac('sha256', $raw, 'wrong_secret', true));
+        $ts = time();
+        $wrong = hash_hmac('sha256', $ts . ':' . $raw, 'wrong_secret');
+        $header = sprintf('ts=%d;h1=%s', $ts, $wrong);
 
-        self::assertFalse($verifier->isValid($sig, $raw));
+        self::assertFalse($verifier->isValid($header, $raw));
     }
 
     public function testEmptyOrNullSignature(): void

@@ -1,4 +1,4 @@
-.PHONY: install cs-fix cs-check stan test test-coverage cache-clear help clean lint docker
+.PHONY: install cs-fix cs-check stan test test-coverage cache-clear help clean lint docker ngrok process-webhook-retries
 
 ## Affiche cette aide détaillée
 help:
@@ -10,6 +10,8 @@ help:
 	@printf "  $(CYAN)stop$(RESET)             Arrête le serveur de développement\n"
 	@printf "  $(CYAN)tail-logs$(RESET)        Affiche les logs en temps réel\n"
 	@printf "  $(CYAN)list-routes$(RESET)      Liste les routes disponibles\n"
+	@printf "  $(CYAN)ngrok$(RESET)            Démarre un tunnel ngrok pour les webhooks Paddle\n"
+	@printf "  $(CYAN)process-webhook-retries$(RESET) Exécute le traitement des retries de webhooks Paddle\n"
 	@printf "\n"
 	@printf "$(BOLD)Installation et maintenance :$(RESET)\n"
 	@printf "  $(CYAN)install$(RESET)          Installe les dépendances Composer\n"
@@ -110,3 +112,11 @@ cc:
 
 serve:
 	symfony server:start -d
+
+## Démarre un tunnel ngrok pour les webhooks Paddle
+ngrok:
+	ngrok start --config=./ngrok.yml paddle_webhook
+
+## Exécute le traitement des retries de webhooks Paddle
+process-webhook-retries:
+	./bin/process-paddle-webhook-retries.sh $(env)

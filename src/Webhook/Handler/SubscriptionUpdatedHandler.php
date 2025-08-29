@@ -10,8 +10,7 @@ class SubscriptionUpdatedHandler
     public function __construct(
         private readonly LoggerInterface $logger,
         private readonly PayloadUserProvisioner $provisioner,
-    )
-    {
+    ) {
     }
 
     /**
@@ -50,4 +49,3 @@ class SubscriptionUpdatedHandler
         $this->provisioner->handleSubscriptionUpdated($payload);
     }
 }
-

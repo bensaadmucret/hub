@@ -1,0 +1,8 @@
+# Exemple de configuration crontab pour les retries de webhooks Paddle
+# À ajouter dans votre crontab avec la commande: crontab -e
+
+# Exécuter le traitement des retries toutes les 5 minutes
+*/5 * * * * cd /chemin/absolu/vers/app_demo && ./bin/process-paddle-webhook-retries.sh prod >> /var/log/paddle-webhook-retry.log 2>&1
+
+# Note: Remplacez "/chemin/absolu/vers/app_demo" par le chemin absolu vers votre projet
+# Note: Assurez-vous que le répertoire /var/log existe et est accessible en écriture

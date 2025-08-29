@@ -18,9 +18,11 @@ final class PaddleWebhookControllerTest extends WebTestCase
         return $_ENV['PADDLE_WEBHOOK_SECRET'] ?? $_SERVER['PADDLE_WEBHOOK_SECRET'] ?? 'test_secret';
     }
 
-    private static function sign(string $raw): string
+    private static function signatureHeader(string $raw): string
     {
-        return base64_encode(hash_hmac('sha256', $raw, self::secret(), true));
+        $ts = time();
+        $h1 = hash_hmac('sha256', $ts . ':' . $raw, self::secret());
+        return sprintf('ts=%d;h1=%s', $ts, $h1);
     }
 
     public function testUnauthorizedWhenSignatureMissing(): void
@@ -53,12 +55,12 @@ final class PaddleWebhookControllerTest extends WebTestCase
             '/webhooks/paddle',
             server: [
                 'CONTENT_TYPE' => 'application/json',
-                'HTTP_paddle-signature' => self::sign($raw),
+                'HTTP_Paddle-Signature' => self::signatureHeader($raw),
             ],
             content: $raw,
         );
 
-        // Le contrôleur ACK en 204 même si le JSON est invalide (signature valide)
+        // Le contrôleur accepte le JSON invalide mais avec signature valide (ACK rapide)
         self::assertSame(204, $client->getResponse()->getStatusCode());
     }
 
@@ -95,7 +97,7 @@ final class PaddleWebhookControllerTest extends WebTestCase
         $raw = json_encode($payload, JSON_THROW_ON_ERROR);
         $headers = [
             'CONTENT_TYPE' => 'application/json',
-            'HTTP_paddle-signature' => self::sign($raw),
+            'HTTP_Paddle-Signature' => self::signatureHeader($raw),
             'HTTP_paddle-event-id' => 'evt_test_12345',
         ];
 

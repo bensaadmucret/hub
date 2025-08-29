@@ -10,8 +10,7 @@ class PaymentSucceededHandler
     public function __construct(
         private readonly LoggerInterface $logger,
         private readonly PayloadUserProvisioner $provisioner,
-    )
-    {
+    ) {
     }
 
     /**
@@ -45,4 +44,3 @@ class PaymentSucceededHandler
         $this->provisioner->handlePaymentSucceeded($payload);
     }
 }
-

@@ -12,18 +12,39 @@ class PaddleSignatureVerifier
     }
 
     /**
-     * Validate Paddle HMAC signature (Billing - shared secret).
-     * Signature is expected to be base64-encoded HMAC-SHA256 of the raw request body.
+     * Validate Paddle Billing webhook signature using the ts/h1 scheme.
+     * Header format: "ts=<unixTimestamp>;h1=<hex_hmac_sha256(ts:rawBody)>".
+     * Allows a maximum clock skew of 300 seconds (5 minutes).
      */
-    public function isValid(?string $providedSignature, string $rawBody): bool
+    public function isValid(?string $signatureHeader, string $rawBody): bool
     {
-        if ($providedSignature === null || $providedSignature === '') {
+        if ($signatureHeader === null || $signatureHeader === '') {
             return false;
         }
 
-        $computed = base64_encode(hash_hmac('sha256', $rawBody, $this->signingSecret, true));
+        $parts = [];
+        foreach (explode(';', $signatureHeader) as $part) {
+            [$k, $v] = array_pad(explode('=', trim($part), 2), 2, null);
+            if ($k !== null && $v !== null) {
+                $parts[$k] = $v;
+            }
+        }
 
-        // Timing-safe comparison
-        return hash_equals($computed, $providedSignature);
+        if (!isset($parts['ts'], $parts['h1'])) {
+            return false;
+        }
+
+        $ts = (int) $parts['ts'];
+        $h1 = $parts['h1'];
+
+        // Reject if timestamp is too old/new (>5 min skew)
+        if (abs(time() - $ts) > 300) {
+            return false;
+        }
+
+        $signedPayload = $ts . ':' . $rawBody;
+        $expected = hash_hmac('sha256', $signedPayload, $this->signingSecret);
+
+        return hash_equals($expected, $h1);
     }
 }

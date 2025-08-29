@@ -10,7 +10,8 @@ final class PayloadClient implements PayloadClientInterface
         private readonly HttpClientInterface $http,
         private readonly string $baseUrl,
         private readonly string $apiKey,
-    ) {}
+    ) {
+    }
 
     /**
      * @param array<string, string> $extra

@@ -1,0 +1,8 @@
+version: 2
+authtoken: 31K8QVxZYQA7Yi5aef38s6navuN_5TcS1qszzS9wAqZj9Msrn
+web_addr: localhost:4040
+tunnels:
+  paddle_webhook:
+    proto: http
+    addr: localhost:8000
+    inspect: true

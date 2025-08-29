@@ -213,7 +213,10 @@ class PayloadUserProvisioner
         $now = new \DateTimeImmutable();
         $trialEndDt = null;
         if (is_string($trialEnd)) {
-            try { $trialEndDt = new \DateTimeImmutable($trialEnd); } catch (\Throwable) {}
+            try {
+                $trialEndDt = new \DateTimeImmutable($trialEnd);
+            } catch (\Throwable) {
+            }
         }
 
         return match ($eventType) {
