@@ -1,0 +1,89 @@
+    <form method="post" class="space-y-6" data-controller="onboarding-validation" data-action="submit->onboarding-validation#submitForm">
+        <input type="hidden" name="_token" value="{{ csrf_token('onboarding_step4') }}">
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Récapitulatif de votre profil
+                </h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                    Vérifiez les informations avant de finaliser votre inscription.
+                </p>
+            </div>
+            <div class="border-t border-gray-200">
+                <dl>
+                    <div class="bg-gray-50 px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Prénom</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ userData.firstName }}</dd>
+                    </div>
+                    <div class="bg-white px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Nom</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ userData.lastName }}</dd>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Email</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ userData.email }}</dd>
+                    </div>
+                    <div class="bg-white px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Année d'études</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            {% if userData.studyYear == 'pass' %}
+                                PASS (Parcours d'Accès Spécifique Santé)
+                            {% elseif userData.studyYear == 'las' %}
+                                LAS (Licence avec option Accès Santé)
+                            {% else %}
+                                {{ userData.studyYear }}
+                            {% endif %}
+                        </dd>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Date d'examen</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ userData.examDate|date('d/m/Y') }}</dd>
+                    </div>
+                    <div class="bg-white px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Objectif de score</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ userData.targetScore }}/100</dd>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Heures d'étude par semaine</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ userData.studyHoursPerWeek }} heures</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <div class="flex items-start">
+            <div class="flex items-center h-5">
+                <input 
+                    id="termsAccepted" 
+                    name="termsAccepted" 
+                    type="checkbox" 
+                    {% if termsAccepted %}checked{% endif %}
+                    class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                    data-onboarding-validation-target="checkbox"
+                    data-action="change->onboarding-validation#validateCheckbox"
+                >
+            </div>
+            <div class="ml-3 text-sm">
+                <label for="termsAccepted" class="font-medium text-gray-700">J'accepte les conditions d'utilisation</label>
+                <p class="text-gray-500">En créant un compte, vous acceptez nos <a href="#" class="text-indigo-600 hover:text-indigo-500">conditions d'utilisation</a> et notre <a href="#" class="text-indigo-600 hover:text-indigo-500">politique de confidentialité</a>.</p>
+                {% if errors.termsAccepted is defined %}
+                    <p class="mt-1 text-sm text-red-600">{{ errors.termsAccepted }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="flex justify-between">
+            <a 
+                href="{{ path('app_onboarding_step3') }}" 
+                class="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+                Précédent
+            </a>
+            <button 
+                type="submit" 
+                class="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+                Finaliser mon inscription
+            </button>
+        </div>
+    </form>

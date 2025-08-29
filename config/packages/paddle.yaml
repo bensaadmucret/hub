@@ -1,0 +1,8 @@
+parameters:
+    # Configuration Paddle
+    paddle.price_id: '%env(PADDLE_PRICE_ID)%'
+    paddle.client_token: '%env(PADDLE_CLIENT_TOKEN)%'
+    paddle.api_key: '%env(PADDLE_API_KEY)%'
+    paddle.api_base: '%env(PADDLE_API_BASE)%'
+    paddle.webhook_secret: '%env(PADDLE_WEBHOOK_SECRET)%'
+    paddle.js_checkout_enabled: '%env(bool:PADDLE_JS_CHECKOUT_ENABLED)%'

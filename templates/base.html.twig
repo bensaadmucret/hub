@@ -104,6 +104,30 @@
         </div>
     </nav>
 
+    {# Messages flash #}
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                <div class="rounded-md p-4 {% if label == 'success' %}bg-green-50 text-green-800{% elseif label == 'error' %}bg-red-50 text-red-800{% else %}bg-blue-50 text-blue-800{% endif %}">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            {% if label == 'success' %}
+                                <i class="fas fa-check-circle"></i>
+                            {% elseif label == 'error' %}
+                                <i class="fas fa-exclamation-circle"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle"></i>
+                            {% endif %}
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium">{{ message }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endfor %}
+
     {% block body %}{% endblock %}
 
     <!-- Footer -->

@@ -1,0 +1,37 @@
+{# Ce composant ne doit pas étendre base.html.twig car il est utilisé dans des templates qui l'étendent déjà #}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div class="text-center">
+            <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+                {{ pageTitle }}
+            </h2>
+            <p class="mt-2 text-sm text-gray-600">
+                {{ pageDescription }}
+            </p>
+        </div>
+        
+        {# Indicateur de progression #}
+        <div class="mb-8">
+            <div class="flex justify-between items-center">
+                {% for step in 1..4 %}
+                    <div 
+                        class="w-full h-2 {{ step <= currentStep ? 'bg-indigo-600' : 'bg-gray-200' }} 
+                        {{ step == 1 ? 'rounded-l-full' : '' }} 
+                        {{ step == 4 ? 'rounded-r-full' : '' }}"
+                    ></div>
+                {% endfor %}
+            </div>
+            <div class="flex justify-between mt-2">
+                <span class="text-xs">Compte</span>
+                <span class="text-xs">Académique</span>
+                <span class="text-xs">Objectifs</span>
+                <span class="text-xs">Confirmation</span>
+            </div>
+        </div>
+        
+        {# Contenu du composant #}
+        <div>
+            {{ content|raw }}
+        </div>
+    </div>
+</div>

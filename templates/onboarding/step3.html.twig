@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Objectifs d'étude{% endblock %}
+
+{% block body %}
+    {{ component('Onboarding/OnboardingLayout', {
+        currentStep: componentProps.currentStep,
+        pageTitle: 'Objectifs d\'étude',
+        pageDescription: 'Définissez vos objectifs pour réussir',
+        content: component('Onboarding/Step3StudyObjectives', componentProps)
+    }) }}
+{% endblock %}

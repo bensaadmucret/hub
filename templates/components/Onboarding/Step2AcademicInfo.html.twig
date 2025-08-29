@@ -1,0 +1,64 @@
+    <form method="post" class="space-y-6" data-controller="onboarding-validation" data-action="submit->onboarding-validation#submitForm">
+        <input type="hidden" name="_token" value="{{ csrf_token('onboarding_step2') }}">
+        <div>
+            <label for="studyYear" class="block text-sm font-medium text-gray-700">
+                Année d'études
+            </label>
+            <div class="mt-1">
+                <select 
+                    id="studyYear" 
+                    name="studyYear" 
+                    required
+                    class="appearance-none block w-full px-3 py-2 border {% if errors.studyYear is defined %}border-red-500{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    data-onboarding-validation-target="select"
+                    data-action="change->onboarding-validation#validateSelect"
+                >
+                    <option value="" {% if studyYear == '' %}selected{% endif %}>Sélectionnez votre année d'études</option>
+                    <option value="pass" {% if studyYear == 'pass' %}selected{% endif %}>PASS (Parcours d'Accès Spécifique Santé)</option>
+                    <option value="las" {% if studyYear == 'las' %}selected{% endif %}>LAS (Licence avec option Accès Santé)</option>
+                </select>
+                {% if errors.studyYear is defined %}
+                    <p class="mt-1 text-sm text-red-600">{{ errors.studyYear }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div>
+            <label for="examDate" class="block text-sm font-medium text-gray-700">
+                Date de l'examen
+            </label>
+            <div class="mt-1">
+                <input 
+                    id="examDate" 
+                    name="examDate" 
+                    type="date" 
+                    required 
+                    value="{{ examDate }}"
+                    class="appearance-none block w-full px-3 py-2 border {% if errors.examDate is defined %}border-red-500{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    data-onboarding-validation-target="date"
+                    data-action="change->onboarding-validation#validateDate"
+                >
+                {% if errors.examDate is defined %}
+                    <p class="mt-1 text-sm text-red-600">{{ errors.examDate }}</p>
+                {% endif %}
+            </div>
+            <p class="mt-1 text-xs text-gray-500">
+                Cette date nous permettra de calibrer votre plan d'étude.
+            </p>
+        </div>
+
+        <div class="flex justify-between">
+            <a 
+                href="{{ path('app_onboarding_step1') }}" 
+                class="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+                Précédent
+            </a>
+            <button 
+                type="submit" 
+                class="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+                Continuer
+            </button>
+        </div>
+    </form>

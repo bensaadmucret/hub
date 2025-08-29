@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Informations académiques{% endblock %}
+
+{% block body %}
+    {{ component('Onboarding/OnboardingLayout', {
+        currentStep: componentProps.currentStep,
+        pageTitle: 'Informations académiques',
+        pageDescription: 'Parlez-nous de votre parcours d\'\u00e9tudes',
+        content: component('Onboarding/Step2AcademicInfo', componentProps)
+    }) }}
+{% endblock %}

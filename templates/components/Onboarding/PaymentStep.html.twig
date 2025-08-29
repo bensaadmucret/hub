@@ -1,0 +1,55 @@
+<div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+    <div class="px-4 py-5 sm:px-6">
+        <h3 class="text-lg leading-6 font-medium text-gray-900">
+            Finalisation de votre inscription
+        </h3>
+        <p class="mt-1 max-w-2xl text-sm text-gray-500">
+            Votre profil a été créé avec succès. Pour accéder à tous nos services, veuillez procéder au paiement.
+        </p>
+    </div>
+    <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+        <div class="mb-6">
+            <h4 class="text-md font-medium text-gray-900">Détails de l'abonnement</h4>
+            <div class="mt-2 flex justify-between">
+                <span class="text-sm text-gray-700">Accès complet à la plateforme</span>
+                <span class="text-sm font-medium text-gray-900">{{ price }} €</span>
+            </div>
+        </div>
+        
+        <div class="mt-8" data-controller="paddle-checkout">
+            <!-- Bouton de paiement avec Paddle.js -->
+            <button 
+                type="button" 
+                id="paddle-checkout-button"
+                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                data-paddle-checkout-target="button"
+                data-action="paddle-checkout#openCheckout"
+                data-price-id="{{ priceId }}"
+                data-customer-email="{{ customerEmail }}"
+                data-customer-name="{{ customerName }}"
+            >
+                Payer maintenant
+            </button>
+            
+            <!-- Formulaire de fallback si Paddle.js ne fonctionne pas -->
+            <form method="post" action="{{ path('app_onboarding_payment_process') }}" class="mt-4" id="payment-fallback-form">
+                <input type="hidden" name="priceId" value="{{ priceId }}">
+                <button 
+                    type="submit" 
+                    class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                    Problème avec le paiement ? Cliquez ici
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="flex justify-between">
+    <a 
+        href="{{ path('app_onboarding_step4') }}" 
+        class="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+    >
+        Retour
+    </a>
+</div>

@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Confirmation{% endblock %}
+
+{% block body %}
+    {{ component('Onboarding/OnboardingLayout', {
+        currentStep: componentProps.currentStep,
+        pageTitle: 'Confirmation',
+        pageDescription: 'Vérifiez vos informations et confirmez votre inscription',
+        content: component('Onboarding/Step4Confirmation', componentProps)
+    }) }}
+{% endblock %}

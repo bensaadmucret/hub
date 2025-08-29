@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créez votre compte{% endblock %}
+
+{% block body %}
+    {{ component('Onboarding/OnboardingLayout', {
+        currentStep: componentProps.currentStep,
+        pageTitle: 'Créez votre compte',
+        pageDescription: 'Commencez par renseigner vos informations personnelles',
+        content: component('Onboarding/Step1AccountCreation', componentProps)
+    }) }}
+{% endblock %}

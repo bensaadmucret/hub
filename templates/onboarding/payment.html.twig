@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Paiement{% endblock %}
+
+{% block body %}
+    {{ component('Onboarding/OnboardingLayout', {
+        currentStep: 4,
+        pageTitle: 'Paiement',
+        pageDescription: 'Finalisez votre inscription en effectuant le paiement',
+        content: component('Onboarding/PaymentStep', componentProps)
+    }) }}
+{% endblock %}
