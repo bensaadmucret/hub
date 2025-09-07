@@ -9,9 +9,9 @@
 
 ### Sprint 1-2 : Infrastructure + Mémorisation (Semaines 1-4)
 **Livrables :**
-- [ ] Architecture backend Node.js + MongoDB + Redis
+- [ ] Architecture backend Node.js + Payload CMS + Redis
 - [ ] Système d'authentification JWT
-- [ ] Base de données utilisateurs + sessions
+- [ ] Collections Payload CMS (utilisateurs + sessions)
 - [ ] **Fonctionnalité : Optimiser mémorisation**
   - [ ] Algorithme SuperMemo SM-2
   - [ ] Interface révision (Facile/Moyen/Difficile)
@@ -71,109 +71,126 @@ POST /api/anatomy/complete-session
 ### Stack validé
 ```
 Frontend: React/TypeScript (existant dashboard-app)
-Backend: Node.js/Express
-Base de données: MongoDB
-Cache: Redis (sessions, résultats)
-Authentification: JWT
+Backend: Node.js/Express (logique métier + algorithmes)
+CMS: Payload CMS (gestion contenu + utilisateurs)
+Cache: Redis (sessions, calculs répétition espacée)
+Authentification: JWT via Payload CMS
 Déploiement: Docker + CI/CD
 ```
 
-### Structure base de données MongoDB
+### Architecture API-First avec Payload CMS
 ```javascript
-// Collections principales
+// Payload CMS Collections (gérées via API)
 
-// Users
+// Users (via Payload CMS Auth)
 {
-  _id: ObjectId,
-  email: String,
-  passwordHash: String,
+  id: string,
+  email: string,
   planType: "free" | "premium",
-  createdAt: Date,
   profile: {
-    firstName: String,
-    lastName: String,
+    firstName: string,
+    lastName: string,
     studyLevel: "PASS" | "LAS" | "ECN"
-  }
+  },
+  createdAt: Date,
+  updatedAt: Date
 }
 
-// UserSessions
+// UserSessions (Collection Payload)
 {
-  _id: ObjectId,
-  userId: ObjectId,
+  id: string,
+  user: relationship, // vers Users
   sessionType: "memorization" | "error_analysis" | "planning" | "anatomy",
-  data: Object,
+  data: json,
   createdAt: Date,
   completedAt: Date
 }
 
-// SpacedRepetitionCards
+// SpacedRepetitionCards (Collection Payload)
 {
-  _id: ObjectId,
-  userId: ObjectId,
-  contentId: ObjectId,
-  easeFactor: Number, // 1.3 - 2.5
-  interval: Number,   // jours
-  repetitions: Number,
+  id: string,
+  user: relationship,
+  contentId: string,
+  easeFactor: number, // 1.3 - 2.5
+  interval: number,   // jours
+  repetitions: number,
   nextReview: Date,
   lastReviewed: Date
 }
 
-// UserResponses
+// UserResponses (Collection Payload)
 {
-  _id: ObjectId,
-  userId: ObjectId,
-  questionId: ObjectId,
-  response: String,
-  isCorrect: Boolean,
-  responseTime: Number, // ms
-  createdAt: Date,
-  sessionId: ObjectId
-}
-
-// WeeklyPlans
-{
-  _id: ObjectId,
-  userId: ObjectId,
-  weekStart: Date,
-  planData: {
-    subjects: Array,
-    schedule: Object,
-    totalHours: Number
-  },
+  id: string,
+  user: relationship,
+  questionId: string,
+  response: string,
+  isCorrect: boolean,
+  responseTime: number, // ms
+  session: relationship, // vers UserSessions
   createdAt: Date
 }
 
-// AnatomySystems
+// WeeklyPlans (Collection Payload)
 {
-  _id: ObjectId,
-  name: String,
-  description: String,
-  difficultyLevel: Number, // 1-5
-  prerequisites: [ObjectId],
-  estimatedDuration: Number // minutes
+  id: string,
+  user: relationship,
+  weekStart: Date,
+  planData: json, // {subjects, schedule, totalHours}
+  createdAt: Date
 }
 
-// AnatomyQuestions
+// AnatomySystems (Collection Payload - Admin managed)
 {
-  _id: ObjectId,
-  systemId: ObjectId,
-  question: String,
-  options: [String],
-  correctAnswer: String,
-  difficulty: Number, // 1-5
-  tags: [String]
+  id: string,
+  name: string,
+  description: richText,
+  difficultyLevel: number, // 1-5
+  prerequisites: relationship[], // vers AnatomySystems
+  estimatedDuration: number, // minutes
+  slug: string
 }
 
-// LearningPaths
+// AnatomyQuestions (Collection Payload - Admin managed)
 {
-  _id: ObjectId,
-  userId: ObjectId,
-  systemId: ObjectId,
-  progress: Number, // 0-100%
-  completedQuestions: [ObjectId],
+  id: string,
+  system: relationship, // vers AnatomySystems
+  question: richText,
+  options: array, // [{text: string, isCorrect: boolean}]
+  difficulty: number, // 1-5
+  tags: array, // [string]
+  slug: string
+}
+
+// LearningPaths (Collection Payload)
+{
+  id: string,
+  user: relationship,
+  system: relationship, // vers AnatomySystems
+  progress: number, // 0-100%
+  completedQuestions: relationship[], // vers AnatomyQuestions
   startedAt: Date,
   completedAt: Date
 }
+```
+
+### APIs principales (Dashboard-app ↔ Payload CMS)
+```javascript
+// Authentification (via Payload)
+POST /api/users/login
+POST /api/users/logout
+GET  /api/users/me
+
+// Fonctionnalités MVP (logique dans dashboard-app)
+POST /api/spaced-repetition/review    // Calcul SuperMemo + update Payload
+GET  /api/analytics/user-errors       // Analyse depuis Payload + Redis cache
+POST /api/planning/generate           // Algorithme + sauvegarde Payload
+GET  /api/anatomy/path/:system        // Récupère depuis Payload + logique parcours
+
+// Collections Payload (CRUD standard)
+GET    /api/anatomy-systems
+GET    /api/anatomy-questions
+POST   /api/user-sessions
+PUT    /api/spaced-repetition-cards/:id
 ```
 
 ## Métriques de succès MVP
