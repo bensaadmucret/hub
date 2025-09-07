@@ -212,13 +212,60 @@ PUT    /api/spaced-repetition-cards/:id
 - [ ] Planning : 60% génèrent un planning hebdomadaire
 - [ ] Anatomie : 50% complètent un parcours système
 
-## Phase 2 - Évolution IA (Optionnelle)
+## Phase 2 - Optimisation SEO & Performance
+
+### Problématique Vite/React SEO
+**Défi :** Application SPA React avec Vite = mauvais SEO par défaut (contenu généré côté client)
+**Impact :** Pages marketing (/marketing) non indexables correctement par Google
+
+### Solutions techniques à évaluer
+1. **Server-Side Rendering (SSR)**
+   - Next.js migration ou Vite SSR
+   - Rendu serveur pour pages marketing
+   - Complexité : Élevée, refactoring complet
+
+2. **Static Site Generation (SSG)**
+   - Pré-génération pages marketing statiques
+   - Astro, Next.js export, ou Vite SSG plugin
+   - Complexité : Moyenne, pages spécifiques
+
+3. **Pré-rendu (Prerendering)**
+   - Puppeteer/Playwright pour générer HTML statique
+   - Solution hybride SPA + pages pré-rendues
+   - Complexité : Faible, solution pragmatique
+
+4. **React Helmet + Meta dynamiques**
+   - Gestion meta tags côté client
+   - Amélioration partielle SEO
+   - Complexité : Très faible
+
+### Recommandation : Approche progressive
+**Phase 2A - Quick wins (2 semaines) :**
+- [ ] React Helmet pour meta tags dynamiques
+- [ ] Sitemap.xml et robots.txt optimisés
+- [ ] Structure sémantique HTML5 (header, main, section, article)
+- [ ] Schema.org markup pour pages marketing
+- [ ] Core Web Vitals optimization
+
+**Phase 2B - Solution technique (4-6 semaines) :**
+- [ ] Évaluation technique SSR vs SSG vs Prerendering
+- [ ] POC solution retenue sur page /marketing
+- [ ] Implémentation complète pages publiques
+- [ ] Tests SEO et indexation Google
+
+### Critères de déclenchement Phase 2
+- [ ] MVP validé avec trafic organique insuffisant
+- [ ] Pages marketing non indexées par Google
+- [ ] Concurrence SEO identifiée
+- [ ] Budget développement disponible
+
+## Phase 3 - Évolution IA (Optionnelle)
 
 ### Fonctionnalités IA à ajouter si besoin
 1. **Préparer examen blanc** - Génération contenu varié via LLM
 2. **Coaching motivation** - IA conversationnelle personnalisée
 
-### Critères de déclenchement Phase 2
+### Critères de déclenchement Phase 3
 - [ ] MVP validé avec 500+ utilisateurs actifs
 - [ ] Taux de conversion > 8%
 - [ ] Demande utilisateur forte pour fonctionnalités avancées
