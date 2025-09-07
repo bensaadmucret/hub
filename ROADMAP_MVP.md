@@ -229,10 +229,12 @@ PUT    /api/spaced-repetition-cards/:id
    - Astro, Next.js export, ou Vite SSG plugin
    - Complexité : Moyenne, pages spécifiques
 
-3. **Pré-rendu (Prerendering)**
-   - Puppeteer/Playwright pour générer HTML statique
-   - Solution hybride SPA + pages pré-rendues
-   - Complexité : Faible, solution pragmatique
+3. **Pré-rendu (Prerendering)** ⭐ RECOMMANDÉ
+   - `vite-plugin-prerender`, `vite-plugin-ssr`, ou `React Snap`
+   - Génère HTML statique à la build pour pages fixes
+   - Solution hybride : SPA dynamique + pages marketing statiques
+   - Complexité : Faible, intégration Vite native
+   - Avantages : SEO parfait + performance + garde la SPA
 
 4. **React Helmet + Meta dynamiques**
    - Gestion meta tags côté client
@@ -247,11 +249,41 @@ PUT    /api/spaced-repetition-cards/:id
 - [ ] Schema.org markup pour pages marketing
 - [ ] Core Web Vitals optimization
 
-**Phase 2B - Solution technique (4-6 semaines) :**
-- [ ] Évaluation technique SSR vs SSG vs Prerendering
-- [ ] POC solution retenue sur page /marketing
-- [ ] Implémentation complète pages publiques
-- [ ] Tests SEO et indexation Google
+**Phase 2B - Solution Prerendering (3-4 semaines) :**
+- [ ] Installation et configuration `vite-plugin-prerender`
+- [ ] Configuration routes à pré-rendre : `/`, `/marketing`, `/login`, `/onboarding`
+- [ ] Intégration React Helmet pour meta tags dynamiques
+- [ ] Build process : génération HTML statique + hydratation React
+- [ ] Tests SEO complets et validation indexation Google
+- [ ] Monitoring Core Web Vitals et performance
+
+**Implémentation technique recommandée :**
+```javascript
+// vite.config.ts
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { prerender } from 'vite-plugin-prerender'
+
+export default defineConfig({
+  plugins: [
+    react(),
+    prerender({
+      routes: ['/', '/marketing', '/login', '/onboarding'],
+      rendererOptions: {
+        renderAfterDocumentEvent: 'render-event'
+      }
+    })
+  ]
+})
+```
+
+**Avantages solution Prerendering :**
+- ✅ SEO parfait pour pages marketing (HTML statique)
+- ✅ Performance excellente (pas de serveur SSR)
+- ✅ Garde la SPA pour dashboard privé
+- ✅ Intégration Vite native sans refactoring
+- ✅ Coûts d'hébergement faibles (statique)
+- ✅ Déploiement simple (CDN/Netlify/Vercel)
 
 ### Critères de déclenchement Phase 2
 - [ ] MVP validé avec trafic organique insuffisant
